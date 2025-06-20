@@ -8,65 +8,72 @@ namespace Controllers.Player
         [Header("Animation Settings")]
         [SerializeField] private float runThreshold = 0.1f;
         [SerializeField] private float directionChangeDelay = 0.15f;
-        
-        // Core components
+
+        // Cached components
         private Animator _animator;
         private PlayerController _playerController;
         private Rigidbody2D _rb;
         private SpriteRenderer _spriteRenderer;
-        
-        // Cached animation parameter hashes
+
+        // Cached animator hashes for better performance
         private static readonly int IsRunning = Animator.StringToHash("IsRunning");
         private static readonly int IsGrounded = Animator.StringToHash("IsGrounded");
-        private static readonly int VelocityY = Animator.StringToHash("VelocityY");
         private static readonly int IsJumping = Animator.StringToHash("IsJumping");
-        private static readonly int IsDoubleJumping = Animator.StringToHash("IsDoubleJumping");
-        
-        // Direction state tracking
+
+        // State tracking to avoid unnecessary animator calls
         private bool _facingRight = true;
+        private bool _lastGroundedState;
+        private bool _lastRunningState;
+        
         private float _lastDirectionChange;
         private float _lastSignificantVelocityX;
-        
+
+        // Update frequency optimization
+        private int _frameCount;
+        private const int ANIMATION_UPDATE_INTERVAL = 3; // Update every 3 frames for smoother performance
+
         private void Awake()
         {
-            // Cache all required components once
+            CacheComponents();
+        }
+
+        private void CacheComponents()
+        {
             _animator = GetComponent<Animator>();
             _playerController = GetComponent<PlayerController>();
             _rb = GetComponent<Rigidbody2D>();
             _spriteRenderer = GetComponent<SpriteRenderer>();
         }
-        
+
         private void Update()
         {
             if (!_animator || !_rb || !_playerController) return;
             
             Vector2 velocity = _rb.linearVelocity;
             bool isGrounded = _playerController.IsGrounded;
-            
-            // Update animation states
-            UpdateAnimationStates(velocity, isGrounded);
-            UpdateSpriteDirection(velocity.x);
-        }
-        
-        /// Updates all animation parameters
-        private void UpdateAnimationStates(Vector2 velocity, bool isGrounded)
-        {
             bool isRunning = isGrounded && Mathf.Abs(velocity.x) > runThreshold;
-            
-            _animator.SetBool(IsRunning, isRunning);
-            _animator.SetBool(IsGrounded, isGrounded);
-            _animator.SetFloat(VelocityY, velocity.y);
-        }
-        
-        /// Handles sprite flipping with delay to prevent jittering
-        private void UpdateSpriteDirection(float velocityX)
-        {
-            // Only track significant movement to avoid jitter
-            if (Mathf.Abs(velocityX) > runThreshold)
+
+            // Only update animator when states actually change
+            if (isRunning != _lastRunningState)
             {
-                _lastSignificantVelocityX = velocityX;
+                _animator.SetBool(IsRunning, isRunning);
+                _lastRunningState = isRunning;
+            }
+
+            if (isGrounded != _lastGroundedState)
+            {
+                _animator.SetBool(IsGrounded, isGrounded);
+                _lastGroundedState = isGrounded;
             }
             
+            UpdateSpriteDirection(velocity.x);
+        }
+
+        private void UpdateSpriteDirection(float velocityX)
+        {
+            if (Mathf.Abs(velocityX) > runThreshold)
+                _lastSignificantVelocityX = velocityX;
+
             bool shouldFaceRight = _lastSignificantVelocityX > 0;
             
             // Apply direction change with delay to prevent rapid flipping
@@ -81,8 +88,5 @@ namespace Controllers.Player
         
         /// Triggers jump animation
         public void TriggerJump() => _animator.SetTrigger(IsJumping);
-        
-        /// Triggers double jump animation
-        public void TriggerDoubleJump() => _animator.SetTrigger(IsDoubleJumping);
     }
 }

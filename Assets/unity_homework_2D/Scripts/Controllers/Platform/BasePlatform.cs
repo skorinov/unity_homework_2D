@@ -1,149 +1,290 @@
 using Controllers.Player;
-using Managers;
 using UnityEngine;
+using System.Collections.Generic;
+using Controllers.Platform.Actions;
+using Controllers.Platform.Presets;
+using Pooling;
 
 namespace Controllers.Platform
 {
     [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D), typeof(PlatformEffector2D))]
-    public abstract class BasePlatform : MonoBehaviour
+    public class BasePlatform : MonoBehaviour, IPoolable
     {
-        [Header("Base Platform Settings")] 
-        [SerializeField] protected Color platformColor = Color.white;
+        [SerializeField] private List<PlatformAction> platformActions = new();
 
-        // Core components - cached for performance
-        protected SpriteRenderer SpriteRenderer;
-        protected BoxCollider2D BoxCollider;
-        protected PlatformEffector2D PlatformEffector;
-        protected PlayerController PlayerOnPlatform;
+        private SpriteRenderer _spriteRenderer;
+        private BoxCollider2D _boxCollider;
+        private PlatformEffector2D _platformEffector;
+        private PlayerController _playerOnPlatform;
 
-        // Original values for reset functionality
-        protected Vector2 OriginalSpriteSize;
-        protected Vector2 OriginalColliderSize;
-        protected Vector2 OriginalColliderOffset;
+        private Vector2 _originalColliderSize;
+        private Vector2 _originalColliderOffset;
+        private Color _originalColor;
+        private Vector2 _originalSpriteSize;
+        private float _originalWidth;
 
-        public abstract PlatformType GetPlatformType();
+        private bool _isInitialized;
+        private bool _hasActiveActions;
 
-        public enum PlatformType
+        private const string PLAYER_TAG = "Player";
+        private const float LANDING_VELOCITY_THRESHOLD = 0.1f;
+
+        private void Awake()
         {
-            Normal, Bouncy, Fragile, Moving, Crumbling, Sticky
+            if (!_isInitialized)
+                InitializePlatform();
         }
 
-        protected virtual void Awake()
+        private void OnEnable() => ResetPlatform();
+
+        private void Update()
         {
-            // Cache components and setup platform properties
-            SpriteRenderer = GetComponent<SpriteRenderer>();
-            BoxCollider = GetComponent<BoxCollider2D>();
-            PlatformEffector = GetComponent<PlatformEffector2D>();
+            if (!_hasActiveActions) return;
+
+            for (int i = 0; i < platformActions.Count; i++)
+                platformActions[i]?.OnUpdate(this);
+        }
+
+        public void OnCreatedInPool() => InitializeActions();
+
+        public void OnGetFromPool()
+        {
+            ResetPlatform();
+            gameObject.SetActive(true);
+        }
+
+        public void OnReturnToPool()
+        {
+            _playerOnPlatform = null;
+            
+            if (_hasActiveActions)
+            {
+                for (int i = 0; i < platformActions.Count; i++)
+                    platformActions[i]?.OnReset(this);
+            }
+            
+            gameObject.SetActive(false);
+        }
+
+        public bool CanReturnToPool() => _playerOnPlatform == null;
+
+        private void InitializePlatform()
+        {
+            CacheComponents();
             CacheOriginalValues();
             SetupOneWayCollision();
+            _isInitialized = true;
         }
 
-        protected virtual void OnEnable() => ResetPlatform();
-        
-        /// Stores original component values for reset functionality
+        private void CacheComponents()
+        {
+            _spriteRenderer = GetComponent<SpriteRenderer>();
+            _boxCollider = GetComponent<BoxCollider2D>();
+            _platformEffector = GetComponent<PlatformEffector2D>();
+        }
+
+        private void InitializeActions()
+        {
+            _hasActiveActions = platformActions.Count > 0;
+            
+            if (_hasActiveActions)
+            {
+                for (int i = 0; i < platformActions.Count; i++)
+                    platformActions[i]?.Initialize(this);
+            }
+        }
+
         private void CacheOriginalValues()
         {
-            if (SpriteRenderer?.sprite)
-                OriginalSpriteSize = SpriteRenderer.sprite.bounds.size;
-
-            if (BoxCollider)
+            if (_spriteRenderer)
             {
-                OriginalColliderSize = BoxCollider.size;
-                OriginalColliderOffset = BoxCollider.offset;
+                _originalColor = _spriteRenderer.color;
+                _originalSpriteSize = _spriteRenderer.size;
+                _originalWidth = _spriteRenderer.size.x;
+            }
+
+            if (_boxCollider)
+            {
+                _originalColliderSize = _boxCollider.size;
+                _originalColliderOffset = _boxCollider.offset;
             }
         }
-        
-        /// Configures platform as one-way collision for jump-through behavior
+
         private void SetupOneWayCollision()
         {
-            if (!PlatformEffector) return;
+            if (!_platformEffector) return;
 
-            PlatformEffector.useOneWay = true;
-            PlatformEffector.surfaceArc = 180f;
-            BoxCollider.usedByEffector = true;
+            _platformEffector.useOneWay = true;
+            _platformEffector.surfaceArc = 180f;
+            _boxCollider.usedByEffector = true;
         }
-        
-        /// Resets platform to initial state when returned to pool
-        public virtual void ResetPlatform()
+
+        private void ResetPlatform()
         {
-            // Reset sprite appearance
-            if (SpriteRenderer)
+            if (_spriteRenderer)
             {
-                SpriteRenderer.color = platformColor;
-                SpriteRenderer.size = OriginalSpriteSize;
+                _spriteRenderer.color = _originalColor;
+                _spriteRenderer.size = _originalSpriteSize;
             }
 
-            // Reset collider properties
-            if (BoxCollider)
+            if (_boxCollider)
             {
-                BoxCollider.enabled = true;
-                BoxCollider.size = OriginalColliderSize;
-                BoxCollider.offset = OriginalColliderOffset;
-                BoxCollider.usedByEffector = true;
+                _boxCollider.enabled = true;
+                _boxCollider.size = _originalColliderSize;
+                _boxCollider.offset = _originalColliderOffset;
+                _boxCollider.usedByEffector = true;
             }
-
-            PlayerOnPlatform = null;
+            
+            _playerOnPlatform = null;
+            
+            // Only reset action states, don't remove actions
+            if (_hasActiveActions)
+            {
+                for (int i = 0; i < platformActions.Count; i++)
+                    platformActions[i]?.OnReset(this);
+            }
         }
-        
-        /// Temporarily disables collision for drop-through functionality
+
+        public void SetCustomWidth(float width)
+        {
+            if (!_spriteRenderer) return;
+
+            // Update sprite renderer size (for sliced sprites)
+            _spriteRenderer.size = new Vector2(width, _spriteRenderer.size.y);
+            
+            // Update collider size to match new width
+            if (_boxCollider)
+            {
+                _boxCollider.size = new Vector2(width, _boxCollider.size.y);
+            }
+            
+            // Update original size for reset purposes
+            _originalSpriteSize = _spriteRenderer.size;
+            _originalColliderSize = _boxCollider.size;
+            _originalWidth = width;
+        }
+
         public void DisableCollision() => Invoke(nameof(ResetCollision), 0.2f);
-        
         private void ResetCollision()
         {
-            if (BoxCollider) BoxCollider.enabled = true;
+            if (_boxCollider) _boxCollider.enabled = true;
         }
-
-        #region Collision Events - Optimized player detection
 
         private void OnCollisionEnter2D(Collision2D other)
         {
             if (IsPlayerLanding(other))
-                OnPlayerLanded(other.gameObject.GetComponent<PlayerController>());
+            {
+                var player = other.gameObject.GetComponent<PlayerController>();
+                _playerOnPlatform = player;
+
+                if (_hasActiveActions)
+                {
+                    for (int i = 0; i < platformActions.Count; i++)
+                        platformActions[i]?.OnPlayerLanded(player, this);
+                }
+            }
         }
 
         private void OnCollisionStay2D(Collision2D other)
         {
             if (IsPlayerLanding(other))
-                OnPlayerStaying(other.gameObject.GetComponent<PlayerController>());
+            {
+                var player = other.gameObject.GetComponent<PlayerController>();
+                _playerOnPlatform = player;
+
+                if (_hasActiveActions)
+                {
+                    for (int i = 0; i < platformActions.Count; i++)
+                        platformActions[i]?.OnPlayerStaying(player, this);
+                }
+            }
         }
 
         private void OnCollisionExit2D(Collision2D other)
         {
-            if (other.gameObject.CompareTag("Player"))
-                OnPlayerLeft(other.gameObject.GetComponent<PlayerController>());
+            if (other.gameObject.CompareTag(PLAYER_TAG))
+            {
+                var player = other.gameObject.GetComponent<PlayerController>();
+
+                if (_hasActiveActions)
+                {
+                    for (int i = 0; i < platformActions.Count; i++)
+                        platformActions[i]?.OnPlayerLeft(player, this);
+                }
+
+                _playerOnPlatform = null;
+            }
         }
-        
-        /// Checks if collision is valid player landing (downward movement)
+
         private bool IsPlayerLanding(Collision2D collision) =>
-            collision.gameObject.CompareTag("Player") && collision.rigidbody.linearVelocity.y <= 0.1f;
+            collision.gameObject.CompareTag(PLAYER_TAG) && 
+            collision.rigidbody.linearVelocity.y <= LANDING_VELOCITY_THRESHOLD;
 
-        #endregion
-
-        #region Virtual Methods - Override in derived classes
-
-        protected virtual void OnPlayerLanded(PlayerController player) { }
-        protected virtual void OnPlayerStaying(PlayerController player) { }
-        protected virtual void OnPlayerLeft(PlayerController player) { }
-
-        #endregion
-
-        #region Platform Lifecycle
-
-        /// Breaks platform and removes it from scene
-        protected virtual void BreakPlatform()
+        public void BreakPlatform()
         {
-            if (SpriteRenderer) SpriteRenderer.color = Color.clear;
-            if (BoxCollider) BoxCollider.enabled = false;
-            ReturnToPool();
-        }
-        
-        /// Returns platform to object pool for reuse
-        protected virtual void ReturnToPool()
-        {
-            ResetPlatform();
-            PlatformPool.Instance?.ReturnPlatform(gameObject);
+            if (_spriteRenderer) _spriteRenderer.color = Color.clear;
+            if (_boxCollider) _boxCollider.enabled = false;
+            PlatformPool.Instance?.ReturnPlatform(this);
         }
 
-        #endregion
+        public void AddAction(PlatformAction action)
+        {
+            if (action && !platformActions.Contains(action))
+            {
+                platformActions.Add(action);
+                action.Initialize(this);
+                _hasActiveActions = platformActions.Count > 0;
+            }
+        }
+
+        public void RemoveAction(PlatformAction action)
+        {
+            if (action && platformActions.Contains(action))
+            {
+                action.OnReset(this);
+                platformActions.Remove(action);
+                _hasActiveActions = platformActions.Count > 0;
+            }
+        }
+
+        public void ClearActions()
+        {
+            if (_hasActiveActions)
+            {
+                for (int i = 0; i < platformActions.Count; i++)
+                    platformActions[i]?.OnReset(this);
+            }
+            
+            platformActions.Clear();
+            _hasActiveActions = false;
+        }
+
+        public void ApplyPreset(PlatformPreset preset)
+        {
+            if (!preset) return;
+
+            preset.ApplyToPlatform(this);
+
+            if (_spriteRenderer)
+                _originalColor = _spriteRenderer.color;
+        }
+
+        public bool HasAction<T>() where T : PlatformAction
+        {
+            for (int i = 0; i < platformActions.Count; i++)
+            {
+                if (platformActions[i] is T) return true;
+            }
+            return false;
+        }
+
+        public T GetAction<T>() where T : PlatformAction
+        {
+            for (int i = 0; i < platformActions.Count; i++)
+            {
+                if (platformActions[i] is T action) return action;
+            }
+            return null;
+        }
     }
 }
