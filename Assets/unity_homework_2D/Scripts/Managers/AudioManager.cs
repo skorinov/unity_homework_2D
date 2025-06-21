@@ -14,6 +14,7 @@ namespace Managers
         [SerializeField] private AudioClip bounceSound;
         [SerializeField] private AudioClip platformBreakSound;
         [SerializeField] private AudioClip gameOverSound;
+        [SerializeField] private AudioClip coinSound;
         [SerializeField] private float sfxVolume = 0.7f;
 
         private AudioSource _musicSource;
@@ -67,6 +68,7 @@ namespace Managers
         public void PlayBounceSound() => PlaySFX(bounceSound);
         public void PlayPlatformBreakSound() => PlaySFX(platformBreakSound);
         public void PlayGameOverSound() => PlaySFX(gameOverSound);
+        public void PlayCoinSound() => PlaySFX(coinSound);
 
         private void PlaySFX(AudioClip clip)
         {

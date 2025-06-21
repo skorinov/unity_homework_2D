@@ -2,7 +2,7 @@ using Controllers.Player;
 using UnityEngine;
 using System.Collections.Generic;
 using Controllers.Platform.Actions;
-using Controllers.Platform.Presets;
+using Controllers.Platform.Actions.Presets;
 using Pooling;
 
 namespace Controllers.Platform
@@ -51,6 +51,17 @@ namespace Controllers.Platform
         {
             ResetPlatform();
             gameObject.SetActive(true);
+            
+            Invoke(nameof(NotifyPlatformReady), 0f);
+        }
+        
+        public void NotifyPlatformReady()
+        {
+            if (_hasActiveActions)
+            {
+                for (int i = 0; i < platformActions.Count; i++)
+                    platformActions[i]?.OnPlatformReady(this);
+            }
         }
 
         public void OnReturnToPool()

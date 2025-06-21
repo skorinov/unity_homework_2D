@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using Controllers.Platform.Actions;
 using UnityEngine;
 
-namespace Controllers.Platform.Presets
+namespace Controllers.Platform.Actions.Presets
 {
     [CreateAssetMenu(fileName = "PlatformPreset", menuName = "Platform System/Platform Preset")]
     public class PlatformPreset : ScriptableObject

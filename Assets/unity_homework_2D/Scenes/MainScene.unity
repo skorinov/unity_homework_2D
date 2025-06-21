@@ -719,6 +719,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &382117218
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 382117220}
+  - component: {fileID: 382117219}
+  m_Layer: 0
+  m_Name: CoinPool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &382117219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 382117218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad73d27e39614acd9aa69c33b3ea5f84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dontDestroyOnLoad: 1
+  coinPrefab: {fileID: 8959093094897963722, guid: f7a6a1bca55501f49b97d6de5723c854, type: 3}
+  initialPoolSize: 20
+--- !u!4 &382117220
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 382117218}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.2087371, y: 0.35622534, z: 0.0753592}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1150,7 +1197,7 @@ MonoBehaviour:
   m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 00000000637363282782a74b8b09522b
+  m_ApplyToSortingLayers: 00000000637363282782a74b8b09522b19255879
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0
@@ -1322,21 +1369,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fef29accbb7741e482b1f4aa8d2710dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundObject: {fileID: 1864679104}
-  groundMargin: 0
-  minPlatformDistance: 3
-  maxPlatformDistance: 4
-  platformsAhead: 6
+  minDistance: 3
+  maxDistance: 5
+  platformsAhead: 8
   cleanupDistance: 20
-  minPlatformWidth: 3
-  maxPlatformWidth: 5
-  platformHeight: 0.5
-  maxJumpDistanceX: 3
-  maxJumpDistanceY: 5
-  sameLevelChance: 0.3
-  maxPlatformsPerLevel: 3
-  minDistanceBetweenPlatforms: 2
-  safetyMargin: 0.3
+  minWidth: 3
+  maxWidth: 5
+  maxJumpX: 3
+  maxJumpY: 5
 --- !u!4 &886333687
 Transform:
   m_ObjectHideFlags: 0
@@ -1616,6 +1656,7 @@ MonoBehaviour:
   bounceSound: {fileID: 8300000, guid: 4ace5f47b1baed9479805e0baa257cfc, type: 3}
   platformBreakSound: {fileID: 8300000, guid: b97b6ac0616ca8d4788f2f2642e64719, type: 3}
   gameOverSound: {fileID: 8300000, guid: 8c0b345a301bea44c9cfce2294d100e0, type: 3}
+  coinSound: {fileID: 8300000, guid: da5b27cb364ec3340bfc92e82e474c50, type: 3}
   sfxVolume: 0.7
 --- !u!4 &1372299287
 Transform:
@@ -1697,7 +1738,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 1269269031
-  m_SortingLayer: 3
+  m_SortingLayer: 4
   m_SortingOrder: 1
   m_Sprite: {fileID: -1365543694, guid: 1ba57dd5afa1def43ade38ca56aa6f2a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1906,11 +1947,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &1864679104 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 914949006007633897, guid: 5a5989cb7c615eb469c6fd73919ead98, type: 3}
-  m_PrefabInstance: {fileID: 2727826491707767259}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1869255296
 GameObject:
   m_ObjectHideFlags: 0
@@ -2070,3 +2106,4 @@ SceneRoots:
   - {fileID: 1372299287}
   - {fileID: 886333687}
   - {fileID: 1869255298}
+  - {fileID: 382117220}

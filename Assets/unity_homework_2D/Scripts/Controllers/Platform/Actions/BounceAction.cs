@@ -1,7 +1,7 @@
+using System.Collections.Generic;
 using Controllers.Player;
 using Managers;
 using UnityEngine;
-using System.Collections.Generic;
 
 namespace Controllers.Platform.Actions
 {

@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Platform
   - Ground
+  - Collectable
   layers:
   - Default
   - TransparentFX
@@ -16,7 +17,7 @@ TagManager:
   - Platform
   - Overlay
   - Player
-  - 
+  - Collectable
   - 
   - 
   - 
@@ -48,6 +49,9 @@ TagManager:
     locked: 0
   - name: Platform
     uniqueID: 726796683
+    locked: 0
+  - name: Collectable
+    uniqueID: 2035819801
     locked: 0
   - name: Player
     uniqueID: 1269269031

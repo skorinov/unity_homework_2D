@@ -15,5 +15,6 @@ namespace Controllers.Platform.Actions
         public virtual void OnUpdate(BasePlatform platform) { }
         public virtual void OnReset(BasePlatform platform) { }
         public virtual void Initialize(BasePlatform platform) { }
+        public virtual void OnPlatformReady(BasePlatform platform) { }
     }
 }
