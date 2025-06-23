@@ -23,12 +23,15 @@ namespace Constants
         public const float MENU_AREA_X = -50f;
         public const float GAME_AREA_X = 0f;
         
+        // Camera
+        public const float CAMERA_SIZE = 5f;
+        
         // Platform Generation
         public const float PLATFORM_SEARCH_RANGE = 2f;
         public const float PLATFORM_SPACING = 0.5f;
         public const float VERTICAL_CHECK_RANGE = 1f;
         public const float DEFAULT_PLATFORM_WIDTH = 2f;
-        public const float FIRST_PLATFORM_MULTIPLIER = 0.5f;
+        public const float FIRST_PLATFORM_POSITION = -1f;
         public const float HALF_WIDTH_MULTIPLIER = 0.5f;
         public const int MAX_PLACEMENT_ATTEMPTS = 10;
         

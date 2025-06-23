@@ -35,7 +35,7 @@ namespace Managers
             for (int i = 0; i < platformsAhead; i++)
             {
                 _highestPlatformY += i == 0 ? 
-                    minDistance * GameConstants.FIRST_PLATFORM_MULTIPLIER : 
+                    GameConstants.FIRST_PLATFORM_POSITION :
                     Mathf.Min(Random.Range(minDistance, maxDistance), maxJumpY);
                 GeneratePlatform(_highestPlatformY);
             }

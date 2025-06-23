@@ -29,10 +29,13 @@ namespace UI.Effects
         
         private void Update()
         {
-            MoveClouds();
+            // Use unscaledDeltaTime for menu animations to continue during pause
+            float deltaTime = _isGameMode ? Time.deltaTime : Time.unscaledDeltaTime;
+            
+            MoveClouds(deltaTime);
             
             if (enableFloating && !_isGameMode)
-                FloatingAnimation();
+                FloatingAnimation(deltaTime);
         }
         
         public void SetGameMode(bool isGameMode)
@@ -57,17 +60,18 @@ namespace UI.Effects
             _currentMoveSpeed = _isGameMode ? gameSpeed : menuSpeed;
         }
         
-        private void MoveClouds()
+        private void MoveClouds(float deltaTime)
         {
-            transform.Translate(Vector3.left * (_currentMoveSpeed * Time.deltaTime));
+            transform.Translate(Vector3.left * (_currentMoveSpeed * deltaTime));
             
             if (transform.position.x < resetPosition)
                 ResetPosition();
         }
         
-        private void FloatingAnimation()
+        private void FloatingAnimation(float deltaTime)
         {
-            float floatingY = _originalPosition.y + Mathf.Sin(Time.time * floatingSpeed + _randomOffset) * floatingAmplitude;
+            // Use Time.unscaledTime for menu floating animation
+            float floatingY = _originalPosition.y + Mathf.Sin(Time.unscaledTime * floatingSpeed + _randomOffset) * floatingAmplitude;
             
             transform.position = new Vector3(
                 transform.position.x,

@@ -47,6 +47,7 @@ namespace UI.Effects
         
         private void Update()
         {
+            // Always use unscaledDeltaTime for UI animations to work during pause
             UpdateColorTransition();
             if (enableScaleEffect)
                 UpdateScaleTransition();

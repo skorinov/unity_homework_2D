@@ -13,33 +13,62 @@ namespace UI.Screens
         [SerializeField] private Button startButton;
         [SerializeField] private Button statisticsButton;
         [SerializeField] private Button quitButton;
-        
+
         private void Start()
         {
-            resumeButton?.onClick.AddListener(() => UIManager.Instance?.ResumeGame());
-            startButton?.onClick.AddListener(() => UIManager.Instance?.StartGame());
-            statisticsButton?.onClick.AddListener(() => UIManager.Instance?.ShowStatistics());
-            quitButton?.onClick.AddListener(() => UIManager.Instance?.QuitGame());
+            resumeButton?.onClick.AddListener(OnResumeClicked);
+            startButton?.onClick.AddListener(OnStartClicked);
+            statisticsButton?.onClick.AddListener(OnStatisticsClicked);
+            quitButton?.onClick.AddListener(OnQuitClicked);
         }
-        
+
         public override void Show()
         {
             base.Show();
             UpdateButtonsVisibility();
         }
-        
+
+        private void OnResumeClicked()
+        {
+            if (CanInteract())
+                UIManager.Instance?.ResumeGame();
+        }
+
+        private void OnStartClicked()
+        {
+            if (CanInteract())
+                UIManager.Instance?.StartGame();
+        }
+
+        private void OnStatisticsClicked()
+        {
+            if (CanInteract())
+                UIManager.Instance?.ShowStatistics();
+        }
+
+        private void OnQuitClicked()
+        {
+            if (CanInteract())
+                UIManager.Instance?.QuitGame();
+        }
+
+        private bool CanInteract()
+        {
+            return GameManager.Instance?.IsCameraTransitioning != true;
+        }
+
         private void UpdateButtonsVisibility()
         {
-            bool gameInProgress = UIManager.Instance?.IsGameInProgress == true;
-            
+            bool gameEverStarted = GameManager.Instance?.HasGameEverStarted == true;
+
             if (resumeButton)
-                resumeButton.gameObject.SetActive(gameInProgress);
-                
+                resumeButton.gameObject.SetActive(gameEverStarted);
+
             if (startButton)
             {
                 var startButtonText = startButton.GetComponentInChildren<TextMeshProUGUI>();
                 if (startButtonText)
-                    startButtonText.text = gameInProgress ? "New Game" : "Start Game";
+                    startButtonText.text = gameEverStarted ? "New Game" : "Start Game";
             }
         }
     }

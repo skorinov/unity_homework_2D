@@ -1,3 +1,4 @@
+using Constants;
 using Controllers.Player;
 using Data;
 using Pooling;
@@ -8,7 +9,7 @@ namespace Managers
 {
     public enum GameState
     {
-        Stopped,
+        Menu,
         Playing,
         Paused
     }
@@ -18,80 +19,210 @@ namespace Managers
         [SerializeField] private Transform player;
         [SerializeField] private PlatformGenerator platformGenerator;
         [SerializeField] private Camera mainCamera;
+        [SerializeField] private float cameraTransitionSpeed = 8f;
         [SerializeField] private float deathDistance = 15f;
-        
+
         public System.Action<float> OnHeightChanged;
-        
+
         private float _highestPlayerY;
-        private GameState _gameState = GameState.Stopped;
+        private float _lastGameCameraY;
+        private GameState _gameState = GameState.Menu;
         private bool _isDead;
-        
+        private bool _isCameraTransitioning;
+        private bool _hasGameEverStarted;
+
+        private CameraFollow _cameraFollow;
+        private ScreenWrappingSystem _screenWrapping;
+
         public bool IsGameActive => _gameState == GameState.Playing;
-        public bool IsGameInProgress => _gameState != GameState.Stopped;
-        
+        public bool IsGameInProgress => _gameState != GameState.Menu;
+        public bool HasGameEverStarted => _hasGameEverStarted;
+        public bool IsCameraTransitioning => _isCameraTransitioning;
+
+        protected override void OnSingletonAwake()
+        {
+            InitializeComponents();
+            SetupMenuCamera();
+        }
+
         private void Update()
         {
-            if (!IsGameActive || !player) return;
-            
-            UpdatePlayerHeight();
-            CheckDeathConditions();
-            platformGenerator?.UpdateGeneration(player.position.y);
+            if (_gameState == GameState.Playing && !_isDead && player)
+            {
+                UpdatePlayerHeight();
+                CheckDeathConditions();
+                platformGenerator?.UpdateGeneration(player.position.y);
+            }
         }
-        
+
+        private void InitializeComponents()
+        {
+            if (!mainCamera) mainCamera = Camera.main;
+
+            _cameraFollow = mainCamera.GetComponent<CameraFollow>();
+            if (!_cameraFollow) _cameraFollow = mainCamera.gameObject.AddComponent<CameraFollow>();
+
+            var playerObj = player ? player.gameObject : GameObject.FindWithTag(GameConstants.PLAYER_TAG);
+            if (playerObj)
+            {
+                _screenWrapping = playerObj.GetComponent<ScreenWrappingSystem>();
+                if (!_screenWrapping) _screenWrapping = playerObj.AddComponent<ScreenWrappingSystem>();
+            }
+        }
+
+        private void SetupMenuCamera()
+        {
+            if (mainCamera)
+            {
+                Vector3 pos = mainCamera.transform.position;
+                pos.x = GameConstants.MENU_AREA_X;
+                pos.y = 0f;
+                mainCamera.transform.position = pos;
+                mainCamera.orthographicSize = GameConstants.CAMERA_SIZE;
+            }
+
+            DisableGameComponents();
+        }
+
         public void StartGame()
         {
-            if (!player) return;
+            if (!player || _isCameraTransitioning) return;
             
-            _gameState = GameState.Playing;
-            _isDead = false;
-            DataManager.Instance?.StartNewSession();
-            
-            InitializeGame();
+            // Always reset game state for new game
+            _hasGameEverStarted = true;
+            StartCoroutine(TransitionToGame(true)); // Force new game
         }
-        
-        public void PauseGame() 
+
+        public void PauseGame()
         {
+            if (_gameState != GameState.Playing || _isCameraTransitioning) return;
             _gameState = GameState.Paused;
-            Time.timeScale = 0f;
+            StartCoroutine(TransitionToMenu());
         }
-        
-        public void ResumeGame() 
+
+        public void ResumeGame()
         {
-            _gameState = GameState.Playing;
-            Time.timeScale = 1f;
+            if (_gameState != GameState.Paused || _isCameraTransitioning) return;
+            StartCoroutine(TransitionToGame(false)); // Resume existing game
         }
-        
-        public void StopGame() 
-        {
-            _gameState = GameState.Stopped;
-            Time.timeScale = 0f;
-        }
-        
+
         public void RestartGame()
         {
-            if (!player) return;
-            
+            if (!player || _isCameraTransitioning) return;
+
             _isDead = false;
-            ResetAllSystems();
-            
+            ResetGameSystems();
             _highestPlayerY = player.position.y;
             OnHeightChanged?.Invoke(_highestPlayerY);
-            platformGenerator?.ResetGeneration(player.position);
-            
-            _gameState = GameState.Playing;
-            Time.timeScale = 1f;
+
+            StartCoroutine(TransitionToGame(true)); // Force new game
             AudioManager.Instance?.PlayBackgroundMusic();
         }
-        
+
+        private System.Collections.IEnumerator TransitionToGame(bool isNewGame = false)
+        {
+            _isCameraTransitioning = true;
+
+            DisableGameComponents();
+            Time.timeScale = 0f;
+
+            // Setup game state
+            if (_gameState == GameState.Menu || isNewGame)
+            {
+                _gameState = GameState.Playing;
+                _isDead = false;
+                _hasGameEverStarted = true;
+                DataManager.Instance?.StartNewSession();
+                
+                // Clear all platforms and reset everything for new game
+                ClearPlatforms();
+                
+                yield return StartCoroutine(MoveCameraToPosition(GameConstants.GAME_AREA_X, GameConstants.CAMERA_SIZE, 0f));
+                
+                if (player) player.position = Vector3.zero;
+                _highestPlayerY = 0f;
+                InitializeGame();
+            }
+            else if (_gameState == GameState.Paused && !isNewGame)
+            {
+                _gameState = GameState.Playing;
+                
+                // Resume from saved camera position
+                yield return StartCoroutine(MoveCameraToPosition(GameConstants.GAME_AREA_X, GameConstants.CAMERA_SIZE, _lastGameCameraY));
+            }
+
+            EnableGameComponents();
+            Time.timeScale = 1f;
+            _isCameraTransitioning = false;
+        }
+
+        private System.Collections.IEnumerator TransitionToMenu()
+        {
+            _isCameraTransitioning = true;
+
+            // Save current camera Y position only if we're pausing (not dying)
+            if (_gameState == GameState.Paused && mainCamera)
+                _lastGameCameraY = mainCamera.transform.position.y;
+
+            DisableGameComponents();
+            Time.timeScale = 0f;
+
+            yield return StartCoroutine(MoveCameraToPosition(GameConstants.MENU_AREA_X, GameConstants.CAMERA_SIZE, 0));
+
+            _isCameraTransitioning = false;
+        }
+
+        private System.Collections.IEnumerator MoveCameraToPosition(float targetX, float targetSize, float targetY)
+        {
+            if (!mainCamera) yield break;
+
+            Vector3 startPos = mainCamera.transform.position;
+            Vector3 targetPos = new Vector3(targetX, targetY, startPos.z);
+            float startSize = mainCamera.orthographicSize;
+            float elapsed = 0f;
+            float duration = 1f / cameraTransitionSpeed;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+
+                mainCamera.transform.position = Vector3.Lerp(startPos, targetPos, t);
+                mainCamera.orthographicSize = Mathf.Lerp(startSize, targetSize, t);
+
+                yield return null;
+            }
+
+            mainCamera.transform.position = targetPos;
+            mainCamera.orthographicSize = targetSize;
+        }
+
+        private void EnableGameComponents()
+        {
+            if (_cameraFollow)
+            {
+                _cameraFollow.enabled = true;
+                _cameraFollow.SetTarget(player);
+            }
+
+            if (_screenWrapping) _screenWrapping.enabled = true;
+        }
+
+        private void DisableGameComponents()
+        {
+            if (_cameraFollow) _cameraFollow.enabled = false;
+            if (_screenWrapping) _screenWrapping.enabled = false;
+        }
+
         private void InitializeGame()
         {
             if (!player) return;
-            
+
             _highestPlayerY = player.position.y;
             OnHeightChanged?.Invoke(_highestPlayerY);
             platformGenerator?.Initialize(player.position);
         }
-        
+
         private void UpdatePlayerHeight()
         {
             float currentHeight = player.position.y;
@@ -102,7 +233,7 @@ namespace Managers
                 DataManager.Instance?.UpdateHeight(_highestPlayerY);
             }
         }
-        
+
         private void CheckDeathConditions()
         {
             if (_isDead || !mainCamera) return;
@@ -113,56 +244,64 @@ namespace Managers
                 TriggerGameOver();
             }
         }
-        
+
         public void TriggerGameOver()
         {
             if (_isDead) return;
 
             _isDead = true;
-            _gameState = GameState.Stopped;
+            _gameState = GameState.Menu;
+            _hasGameEverStarted = false; // Reset so buttons show correctly
+
+            DisableGameComponents();
             Time.timeScale = 0f;
-            
+
             AudioManager.Instance?.StopBackgroundMusic();
             AudioManager.Instance?.PlayGameOverSound();
             UIManager.Instance?.ShowGameOver();
         }
-        
-        private void ResetAllSystems()
+
+        private void ResetGameSystems()
         {
             ResetPlayer();
-            ResetCamera();
-            ClearPools();
+            ResetCameraPosition();
+            ClearPlatforms();
         }
-        
+
         private void ResetPlayer()
         {
             if (!player) return;
 
+            player.position = Vector3.zero;
+
             var playerRb = player.GetComponent<Rigidbody2D>();
-            var playerController = player.GetComponent<PlayerController>();
-            
             if (playerRb)
             {
                 playerRb.linearVelocity = Vector2.zero;
                 playerRb.angularVelocity = 0f;
             }
-            
-            playerController?.ResetMultipliers();
+
+            player.GetComponent<PlayerController>()?.ResetMultipliers();
         }
 
-        private void ResetCamera()
+        private void ResetCameraPosition()
         {
             if (mainCamera)
-                mainCamera.transform.position = new Vector3(0, 0, -10);
+            {
+                Vector3 pos = mainCamera.transform.position;
+                pos.y = 0f;
+                mainCamera.transform.position = pos;
+            }
         }
 
-        private void ClearPools()
+        public void ClearPlatforms()
         {
             PlatformPool.Instance?.ClearAllPlatforms();
             CoinPool.Instance?.ClearAllCoins();
         }
-        
+
         public float GetHighestPlayerY() => _highestPlayerY;
         public Transform GetPlayer() => player;
+        public GameState GetGameState() => _gameState;
     }
 }
