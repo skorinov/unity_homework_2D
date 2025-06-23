@@ -1,3 +1,4 @@
+using Constants;
 using UnityEngine;
 using Utilities;
 
@@ -5,39 +6,41 @@ namespace Managers
 {
     public class AudioManager : Singleton<AudioManager>
     {
-        [Header("Background Music")]
         [SerializeField] private AudioClip backgroundMusic;
-        [SerializeField] private float musicVolume = 0.5f;
-
-        [Header("Sound Effects")]
         [SerializeField] private AudioClip jumpSound;
         [SerializeField] private AudioClip bounceSound;
         [SerializeField] private AudioClip platformBreakSound;
         [SerializeField] private AudioClip gameOverSound;
         [SerializeField] private AudioClip coinSound;
-        [SerializeField] private float sfxVolume = 0.7f;
+        [SerializeField] private AudioClip buttonHoverSound;
+        [SerializeField] private AudioClip buttonClickSound;
 
         private AudioSource _musicSource;
         private AudioSource _sfxSource;
+        private AudioSource _uiSource;
 
         protected override void OnSingletonAwake()
         {
-            InitializeAudioSources();
+            CreateAudioSources();
         }
 
         private void Start() => PlayBackgroundMusic();
 
-        private void InitializeAudioSources()
+        private void CreateAudioSources()
         {
-            _musicSource = gameObject.AddComponent<AudioSource>();
-            _musicSource.clip = backgroundMusic;
-            _musicSource.volume = musicVolume;
-            _musicSource.loop = true;
-            _musicSource.playOnAwake = false;
+            _musicSource = CreateAudioSource(backgroundMusic, GameConstants.DEFAULT_MUSIC_VOLUME, true);
+            _sfxSource = CreateAudioSource(null, GameConstants.DEFAULT_SFX_VOLUME, false);
+            _uiSource = CreateAudioSource(null, GameConstants.DEFAULT_UI_VOLUME, false);
+        }
 
-            _sfxSource = gameObject.AddComponent<AudioSource>();
-            _sfxSource.volume = sfxVolume;
-            _sfxSource.playOnAwake = false;
+        private AudioSource CreateAudioSource(AudioClip clip, float volume, bool loop)
+        {
+            var source = gameObject.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.volume = volume;
+            source.loop = loop;
+            source.playOnAwake = false;
+            return source;
         }
 
         public void PlayBackgroundMusic()
@@ -54,14 +57,17 @@ namespace Managers
 
         public void SetMusicVolume(float volume)
         {
-            musicVolume = Mathf.Clamp01(volume);
-            if (_musicSource) _musicSource.volume = musicVolume;
+            if (_musicSource) _musicSource.volume = Mathf.Clamp01(volume);
         }
 
         public void SetSFXVolume(float volume)
         {
-            sfxVolume = Mathf.Clamp01(volume);
-            if (_sfxSource) _sfxSource.volume = sfxVolume;
+            if (_sfxSource) _sfxSource.volume = Mathf.Clamp01(volume);
+        }
+        
+        public void SetUIVolume(float volume)
+        {
+            if (_uiSource) _uiSource.volume = Mathf.Clamp01(volume);
         }
 
         public void PlayJumpSound() => PlaySFX(jumpSound);
@@ -69,6 +75,14 @@ namespace Managers
         public void PlayPlatformBreakSound() => PlaySFX(platformBreakSound);
         public void PlayGameOverSound() => PlaySFX(gameOverSound);
         public void PlayCoinSound() => PlaySFX(coinSound);
+        public void PlayButtonHover() => PlayUISound(buttonHoverSound);
+        public void PlayButtonClick() => PlayUISound(buttonClickSound);
+        
+        public void PlayUISound(AudioClip clip, float volumeMultiplier = 1f)
+        {
+            if (_uiSource && clip)
+                _uiSource.PlayOneShot(clip, _uiSource.volume * volumeMultiplier);
+        }
 
         private void PlaySFX(AudioClip clip)
         {

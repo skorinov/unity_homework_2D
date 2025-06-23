@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using Controllers.Player;
 using Managers;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Controllers.Platform.Actions
@@ -8,7 +8,6 @@ namespace Controllers.Platform.Actions
     [CreateAssetMenu(fileName = "CrumblingAction", menuName = "Platform Actions/Crumbling Action")]
     public class CrumblingAction : PlatformAction
     {
-        [Header("Crumbling Settings")]
         [SerializeField] private float crumbleDuration = 2f;
         [SerializeField] private float respawnDelay = 5f;
 
@@ -79,81 +78,92 @@ namespace Controllers.Platform.Actions
 
             if (data.isBroken)
             {
-                data.respawnTimer -= Time.deltaTime;
-                if (data.respawnTimer <= 0f)
-                {
-                    var spriteRenderer = platform.GetComponent<SpriteRenderer>();
-                    var boxCollider = platform.GetComponent<BoxCollider2D>();
-                    var platformEffector = platform.GetComponent<PlatformEffector2D>();
-                    
-                    if (spriteRenderer) spriteRenderer.color = data.originalColor;
-                    if (boxCollider) 
-                    {
-                        boxCollider.enabled = true;
-                        boxCollider.usedByEffector = true;
-                    }
-                    if (platformEffector) platformEffector.useOneWay = true;
-                    
-                    data.isBroken = false;
-                    data.isCrumbling = false;
-                    data.respawnTimer = 0f;
-                }
-                _crumbleData[platform] = data;
+                HandleRespawn(platform, data);
                 return;
             }
 
-            if (!data.isCrumbling) return;
+            if (data.isCrumbling)
+                HandleCrumbling(platform, data);
+        }
 
+        private void HandleRespawn(BasePlatform platform, CrumbleData data)
+        {
+            data.respawnTimer -= Time.deltaTime;
+            if (data.respawnTimer <= 0f)
+            {
+                RestorePlatform(platform, data);
+                data.isBroken = false;
+                data.isCrumbling = false;
+                data.respawnTimer = 0f;
+            }
+            _crumbleData[platform] = data;
+        }
+
+        private void HandleCrumbling(BasePlatform platform, CrumbleData data)
+        {
             data.crumbleTimer -= Time.deltaTime;
 
             if (data.crumbleTimer <= 0f)
             {
-                var spriteRenderer = platform.GetComponent<SpriteRenderer>();
-                var boxCollider = platform.GetComponent<BoxCollider2D>();
-                
-                if (spriteRenderer) spriteRenderer.color = Color.clear;
-                if (boxCollider) boxCollider.enabled = false;
-                
-                AudioManager.Instance?.PlayPlatformBreakSound();
-                
+                BreakPlatform(platform, data);
                 data.isCrumbling = false;
                 data.isBroken = true;
                 data.respawnTimer = respawnDelay;
             }
             else
             {
-                var spriteRenderer = platform.GetComponent<SpriteRenderer>();
-                if (spriteRenderer)
-                {
-                    float fadeAmount = data.crumbleTimer / crumbleDuration;
-                    Color color = data.originalColor;
-                    color.a = fadeAmount;
-                    spriteRenderer.color = color;
-                }
+                UpdateCrumbleVisual(platform, data);
             }
 
             _crumbleData[platform] = data;
+        }
+
+        private void BreakPlatform(BasePlatform platform, CrumbleData data)
+        {
+            var spriteRenderer = platform.GetComponent<SpriteRenderer>();
+            var boxCollider = platform.GetComponent<BoxCollider2D>();
+            
+            if (spriteRenderer) spriteRenderer.color = Color.clear;
+            if (boxCollider) boxCollider.enabled = false;
+            
+            AudioManager.Instance?.PlayPlatformBreakSound();
+        }
+
+        private void UpdateCrumbleVisual(BasePlatform platform, CrumbleData data)
+        {
+            var spriteRenderer = platform.GetComponent<SpriteRenderer>();
+            if (spriteRenderer)
+            {
+                float fadeAmount = data.crumbleTimer / crumbleDuration;
+                Color color = data.originalColor;
+                color.a = fadeAmount;
+                spriteRenderer.color = color;
+            }
+        }
+
+        private void RestorePlatform(BasePlatform platform, CrumbleData data)
+        {
+            var spriteRenderer = platform.GetComponent<SpriteRenderer>();
+            var boxCollider = platform.GetComponent<BoxCollider2D>();
+            var platformEffector = platform.GetComponent<PlatformEffector2D>();
+            
+            if (spriteRenderer) spriteRenderer.color = data.originalColor;
+            if (boxCollider) 
+            {
+                boxCollider.enabled = true;
+                boxCollider.usedByEffector = true;
+            }
+            if (platformEffector) platformEffector.useOneWay = true;
         }
 
         public override void OnReset(BasePlatform platform)
         {
             if (_crumbleData.TryGetValue(platform, out var data))
             {
-                var spriteRenderer = platform.GetComponent<SpriteRenderer>();
-                var boxCollider = platform.GetComponent<BoxCollider2D>();
-                var platformEffector = platform.GetComponent<PlatformEffector2D>();
+                RestorePlatform(platform, data);
                 
-                if (spriteRenderer) 
-                {
-                    spriteRenderer.color = data.originalColor;
+                if (platform.GetComponent<SpriteRenderer>() is var spriteRenderer && spriteRenderer)
                     data.originalColor = spriteRenderer.color;
-                }
-                if (boxCollider) 
-                {
-                    boxCollider.enabled = true;
-                    boxCollider.usedByEffector = true;
-                }
-                if (platformEffector) platformEffector.useOneWay = true;
                 
                 data.isCrumbling = false;
                 data.isBroken = false;

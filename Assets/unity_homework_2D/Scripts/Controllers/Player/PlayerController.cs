@@ -1,32 +1,25 @@
+using Constants;
+using Controllers.Platform;
 using Managers;
 using UnityEngine;
-using Controllers.Platform;
+using Utilities;
 
 namespace Controllers.Player
 {
     [RequireComponent(typeof(Rigidbody2D))]
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : Singleton<PlayerController>
     {
-        [Header("Dependencies")]
         [SerializeField] private InputManager inputManager;
-
-        [Header("Movement")]
         [SerializeField] private float baseMoveSpeed = 4f;
         [SerializeField] private float maxHorizontalVelocity = 4f;
-
-        [Header("Jump")]
         [SerializeField] private float baseJumpForce = 12f;
         [SerializeField] private float doubleJumpForce = 8f;
-
-        [Header("Ground Check")]
         [SerializeField] private Transform groundCheck;
         [SerializeField] private float groundCheckRadius = 0.2f;
         [SerializeField] private LayerMask groundLayerMask = 1;
 
         private Rigidbody2D _rb;
         private PlayerAnimationController _animationController;
-
-        private const float CoyoteTimeWindow = 0.2f;
 
         private bool _isGrounded;
         private bool _hasDoubleJumped;
@@ -38,17 +31,10 @@ namespace Controllers.Player
         public bool IsGrounded => _isGrounded;
         public float BaseJumpForce => baseJumpForce;
 
-        private void Awake()
+        protected override void OnSingletonAwake()
         {
-            _rb = GetComponent<Rigidbody2D>();
-            _animationController = GetComponent<PlayerAnimationController>();
-
-            if (inputManager)
-            {
-                inputManager.OnHorizontalInput += HandleHorizontalInput;
-                inputManager.OnJumpInput += TryJump;
-                inputManager.OnDropInput += TryDropThrough;
-            }
+            InitializeComponents();
+            SubscribeToInput();
         }
 
         private void Update()
@@ -63,6 +49,22 @@ namespace Controllers.Player
             ClampHorizontalVelocity();
         }
 
+        private void InitializeComponents()
+        {
+            _rb = GetComponent<Rigidbody2D>();
+            _animationController = GetComponent<PlayerAnimationController>();
+        }
+
+        private void SubscribeToInput()
+        {
+            if (inputManager)
+            {
+                inputManager.OnHorizontalInput += HandleHorizontalInput;
+                inputManager.OnJumpInput += TryJump;
+                inputManager.OnDropInput += TryDropThrough;
+            }
+        }
+
         private void HandleHorizontalInput(float input) =>
             _rb.AddForce(new Vector2(input * baseMoveSpeed * _moveSpeedMultiplier, 0f), ForceMode2D.Force);
 
@@ -75,10 +77,15 @@ namespace Controllers.Player
 
             if (platform)
             {
-                platform.GetComponent<BoxCollider2D>().enabled = false;
-                platform.DisableCollision();
+                DisablePlatformCollision(platform);
                 _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, -5f);
             }
+        }
+
+        private void DisablePlatformCollision(BasePlatform platform)
+        {
+            platform.GetComponent<BoxCollider2D>().enabled = false;
+            platform.DisableCollision();
         }
 
         private void TryJump()
@@ -87,20 +94,22 @@ namespace Controllers.Player
 
             if (canJump)
             {
-                Jump(baseJumpForce * _jumpForceMultiplier);
-                AudioManager.Instance?.PlayJumpSound();
-                _animationController?.TriggerJump();
-
+                PerformJump(baseJumpForce * _jumpForceMultiplier);
                 _hasDoubleJumped = false;
                 _coyoteTimeCounter = 0;
             }
             else if (!_hasDoubleJumped)
             {
-                Jump(doubleJumpForce * _jumpForceMultiplier);
-                AudioManager.Instance?.PlayJumpSound();
-
+                PerformJump(doubleJumpForce * _jumpForceMultiplier);
                 _hasDoubleJumped = true;
             }
+        }
+
+        private void PerformJump(float force)
+        {
+            Jump(force);
+            AudioManager.Instance?.PlayJumpSound();
+            _animationController?.TriggerJump();
         }
 
         public void Jump(float force)
@@ -121,7 +130,7 @@ namespace Controllers.Player
             }
             else if (!_isGrounded && wasGrounded)
             {
-                _coyoteTimeCounter = CoyoteTimeWindow;
+                _coyoteTimeCounter = GameConstants.COYOTE_TIME_WINDOW;
             }
         }
 
@@ -138,5 +147,25 @@ namespace Controllers.Player
         public void SetHorizontalSpeedMultiplier(float multiplier) => _moveSpeedMultiplier = multiplier;
         public void SetJumpForceMultiplier(float multiplier) => _jumpForceMultiplier = multiplier;
         public void ResetMultipliers() => _moveSpeedMultiplier = _jumpForceMultiplier = 1f;
+
+        protected override void OnSingletonDestroy()
+        {
+            UnsubscribeFromInput();
+        }
+
+        private void UnsubscribeFromInput()
+        {
+            if (inputManager)
+            {
+                inputManager.OnHorizontalInput -= HandleHorizontalInput;
+                inputManager.OnJumpInput -= TryJump;
+                inputManager.OnDropInput -= TryDropThrough;
+            }
+        }
+
+        public void ForceEnable()
+        {
+            gameObject.SetActive(true);
+        }
     }
 }

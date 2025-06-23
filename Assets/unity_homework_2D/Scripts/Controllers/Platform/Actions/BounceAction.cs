@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using Controllers.Player;
 using Managers;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Controllers.Platform.Actions
@@ -8,7 +8,6 @@ namespace Controllers.Platform.Actions
     [CreateAssetMenu(fileName = "BounceAction", menuName = "Platform Actions/Bounce Action")]
     public class BounceAction : PlatformAction
     {
-        [Header("Bounce Settings")]
         [SerializeField] private float jumpForceMultiplier = 1.5f;
         [SerializeField] private float bounceScale = 1.1f;
         [SerializeField] private float bounceDuration = 0.2f;

@@ -24,22 +24,6 @@ namespace Pooling
             }
         }
 
-        private T CreateNewObject()
-        {
-            var instance = Object.Instantiate(_prefab, _parent);
-            var component = instance.GetComponent<T>();
-
-            if (component is IPoolable poolable)
-            {
-                poolable.OnCreatedInPool();
-            }
-            
-            instance.SetActive(false);
-            _availableObjects.Enqueue(component);
-            
-            return component;
-        }
-
         public T Get()
         {
             T obj = _availableObjects.Count > 0 ? _availableObjects.Dequeue() : CreateNewObject();
@@ -50,9 +34,7 @@ namespace Pooling
             obj.gameObject.SetActive(true);
 
             if (obj is IPoolable poolable)
-            {
                 poolable.OnGetFromPool();
-            }
             
             return obj;
         }
@@ -66,9 +48,7 @@ namespace Pooling
             obj.gameObject.SetActive(false);
 
             if (obj is IPoolable poolableReturn)
-            {
                 poolableReturn.OnReturnToPool();
-            }
 
             _activeObjects.Remove(obj);
             _availableObjects.Enqueue(obj);
@@ -81,6 +61,20 @@ namespace Pooling
             {
                 Return(obj);
             }
+        }
+
+        private T CreateNewObject()
+        {
+            var instance = Object.Instantiate(_prefab, _parent);
+            var component = instance.GetComponent<T>();
+
+            if (component is IPoolable poolable)
+                poolable.OnCreatedInPool();
+            
+            instance.SetActive(false);
+            _availableObjects.Enqueue(component);
+            
+            return component;
         }
     }
 }

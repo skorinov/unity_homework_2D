@@ -1,23 +1,23 @@
-using UnityEngine;
-using System.Collections.Generic;
+using Controllers.Collectibles;
 using Pooling;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Controllers.Platform.Actions
 {
     [CreateAssetMenu(fileName = "CoinSpawnAction", menuName = "Platform Actions/Coin Spawn Action")]
     public class CoinSpawnAction : PlatformAction
     {
-        [Header("Coin Settings")]
         [SerializeField, Range(0f, 100f)] private float spawnChance = 50f;
         [SerializeField] private int coinCount = 1;
         [SerializeField] private float spawnHeight = 1f;
         [SerializeField] private float coinSpacing = 0.8f;
 
-        private readonly Dictionary<BasePlatform, List<Collectibles.Coin>> _spawnedCoins = new();
+        private readonly Dictionary<BasePlatform, List<Coin>> _spawnedCoins = new();
 
         public override void Initialize(BasePlatform platform)
         {
-            _spawnedCoins[platform] = new List<Collectibles.Coin>();
+            _spawnedCoins[platform] = new List<Coin>();
         }
 
         public override void OnPlatformReady(BasePlatform platform)
@@ -30,7 +30,7 @@ namespace Controllers.Platform.Actions
         {
             if (!CoinPool.Instance) return;
 
-            var coins = new List<Collectibles.Coin>();
+            var coins = new List<Coin>();
             Vector3 pos = platform.transform.position;
             pos.y += spawnHeight;
             pos.z = 0f;

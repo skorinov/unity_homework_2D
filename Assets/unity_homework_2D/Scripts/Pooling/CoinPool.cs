@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using Controllers.Collectibles;
+using System.Collections.Generic;
 using UnityEngine;
 using Utilities;
 
@@ -7,7 +7,6 @@ namespace Pooling
 {
     public class CoinPool : Singleton<CoinPool>
     {
-        [Header("Coin Settings")]
         [SerializeField] private GameObject coinPrefab;
         [SerializeField] private int initialPoolSize = 20;
         

@@ -1,3 +1,4 @@
+using Constants;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,11 +7,9 @@ namespace Controllers.Platform.Actions
     [CreateAssetMenu(fileName = "MovingAction", menuName = "Platform Actions/Moving Action")]
     public class MovingAction : PlatformAction
     {
-        [Header("Moving Settings")]
         [SerializeField] private float moveSpeed = 2f;
         [SerializeField] private float moveRange = 3f;
         [SerializeField] private bool startMovingRight = true;
-        [SerializeField] private float screenMargin = 0.5f;
 
         private readonly Dictionary<BasePlatform, MovingData> _movingData = new();
         private Camera _mainCamera;
@@ -28,34 +27,14 @@ namespace Controllers.Platform.Actions
             if (!_mainCamera) _mainCamera = Camera.main;
 
             var rb = platform.GetComponent<Rigidbody2D>() ?? platform.gameObject.AddComponent<Rigidbody2D>();
-            rb.bodyType = RigidbodyType2D.Kinematic;
-            rb.gravityScale = 0f;
-            rb.freezeRotation = true;
+            SetupRigidbody(rb);
 
-            float screenHalfWidth = _mainCamera.orthographicSize * _mainCamera.aspect;
-            var boxCollider = platform.GetComponent<BoxCollider2D>();
-            float platformHalfWidth = boxCollider ? boxCollider.size.x * platform.transform.localScale.x * 0.5f : 0.5f;
+            var bounds = CalculateBounds(platform);
             
-            float currentX = platform.transform.position.x;
-            float halfRange = moveRange * 0.5f;
-            
-            float screenLeft = -screenHalfWidth + screenMargin + platformHalfWidth;
-            float screenRight = screenHalfWidth - screenMargin - platformHalfWidth;
-            
-            float leftBound = Mathf.Max(currentX - halfRange, screenLeft);
-            float rightBound = Mathf.Min(currentX + halfRange, screenRight);
-            
-            if (rightBound - leftBound < 1f)
-            {
-                float center = (leftBound + rightBound) * 0.5f;
-                leftBound = center - 0.5f;
-                rightBound = center + 0.5f;
-            }
-
             _movingData[platform] = new MovingData
             {
-                leftBound = leftBound,
-                rightBound = rightBound,
+                leftBound = bounds.min,
+                rightBound = bounds.max,
                 direction = startMovingRight ? 1 : -1,
                 rigidbody = rb
             };
@@ -90,6 +69,38 @@ namespace Controllers.Platform.Actions
                 data.direction = startMovingRight ? 1 : -1;
                 _movingData[platform] = data;
             }
+        }
+
+        private void SetupRigidbody(Rigidbody2D rb)
+        {
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.gravityScale = 0f;
+            rb.freezeRotation = true;
+        }
+
+        private (float min, float max) CalculateBounds(BasePlatform platform)
+        {
+            float screenHalfWidth = _mainCamera.orthographicSize * _mainCamera.aspect;
+            var boxCollider = platform.GetComponent<BoxCollider2D>();
+            float platformHalfWidth = boxCollider ? boxCollider.size.x * platform.transform.localScale.x * 0.5f : 0.5f;
+            
+            float currentX = platform.transform.position.x;
+            float halfRange = moveRange * 0.5f;
+            
+            float screenLeft = -screenHalfWidth + GameConstants.SCREEN_MARGIN + platformHalfWidth;
+            float screenRight = screenHalfWidth - GameConstants.SCREEN_MARGIN - platformHalfWidth;
+            
+            float leftBound = Mathf.Max(currentX - halfRange, screenLeft);
+            float rightBound = Mathf.Min(currentX + halfRange, screenRight);
+            
+            if (rightBound - leftBound < 1f)
+            {
+                float center = (leftBound + rightBound) * 0.5f;
+                leftBound = center - 0.5f;
+                rightBound = center + 0.5f;
+            }
+
+            return (leftBound, rightBound);
         }
 
         private void OnDestroy() => _movingData.Clear();

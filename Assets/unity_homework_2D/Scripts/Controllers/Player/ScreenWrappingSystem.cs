@@ -1,10 +1,10 @@
+using Managers;
 using UnityEngine;
 
 namespace Controllers.Player
 {
     public class ScreenWrappingSystem : MonoBehaviour
     {
-        [Header("Screen Wrapping Settings")]
         [SerializeField] private Camera targetCamera;
 
         private float _screenHalfWidth;
@@ -18,7 +18,7 @@ namespace Controllers.Player
 
         private void Update()
         {
-            if (!targetCamera) return;
+            if (GameManager.Instance?.IsGameActive != true || !targetCamera) return;
             
             CheckForCameraSizeChange();
             CheckScreenWrapping();

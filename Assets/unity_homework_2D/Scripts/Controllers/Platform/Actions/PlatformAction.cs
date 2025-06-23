@@ -5,9 +5,8 @@ namespace Controllers.Platform.Actions
 {
     public abstract class PlatformAction : ScriptableObject
     {
-        [Header("Base Settings")]
-        public string actionName;
-        [TextArea(2, 4)] public string description;
+        [SerializeField] public string actionName;
+        [SerializeField, TextArea(2, 4)] public string description;
 
         public virtual void OnPlayerLanded(PlayerController player, BasePlatform platform) { }
         public virtual void OnPlayerStaying(PlayerController player, BasePlatform platform) { }

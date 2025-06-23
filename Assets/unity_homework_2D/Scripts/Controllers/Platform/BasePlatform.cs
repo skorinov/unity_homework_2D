@@ -1,9 +1,10 @@
+using Constants;
 using Controllers.Player;
-using UnityEngine;
-using System.Collections.Generic;
 using Controllers.Platform.Actions;
 using Controllers.Platform.Actions.Presets;
 using Pooling;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Controllers.Platform
 {
@@ -21,13 +22,9 @@ namespace Controllers.Platform
         private Vector2 _originalColliderOffset;
         private Color _originalColor;
         private Vector2 _originalSpriteSize;
-        private float _originalWidth;
 
         private bool _isInitialized;
         private bool _hasActiveActions;
-
-        private const string PLAYER_TAG = "Player";
-        private const float LANDING_VELOCITY_THRESHOLD = 0.1f;
 
         private void Awake()
         {
@@ -51,7 +48,6 @@ namespace Controllers.Platform
         {
             ResetPlatform();
             gameObject.SetActive(true);
-            
             Invoke(nameof(NotifyPlatformReady), 0f);
         }
         
@@ -111,7 +107,6 @@ namespace Controllers.Platform
             {
                 _originalColor = _spriteRenderer.color;
                 _originalSpriteSize = _spriteRenderer.size;
-                _originalWidth = _spriteRenderer.size.x;
             }
 
             if (_boxCollider)
@@ -148,7 +143,6 @@ namespace Controllers.Platform
             
             _playerOnPlatform = null;
             
-            // Only reset action states, don't remove actions
             if (_hasActiveActions)
             {
                 for (int i = 0; i < platformActions.Count; i++)
@@ -160,19 +154,13 @@ namespace Controllers.Platform
         {
             if (!_spriteRenderer) return;
 
-            // Update sprite renderer size (for sliced sprites)
             _spriteRenderer.size = new Vector2(width, _spriteRenderer.size.y);
             
-            // Update collider size to match new width
             if (_boxCollider)
-            {
                 _boxCollider.size = new Vector2(width, _boxCollider.size.y);
-            }
             
-            // Update original size for reset purposes
             _originalSpriteSize = _spriteRenderer.size;
             _originalColliderSize = _boxCollider.size;
-            _originalWidth = width;
         }
 
         public void DisableCollision() => Invoke(nameof(ResetCollision), 0.2f);
@@ -213,7 +201,7 @@ namespace Controllers.Platform
 
         private void OnCollisionExit2D(Collision2D other)
         {
-            if (other.gameObject.CompareTag(PLAYER_TAG))
+            if (other.gameObject.CompareTag(GameConstants.PLAYER_TAG))
             {
                 var player = other.gameObject.GetComponent<PlayerController>();
 
@@ -228,8 +216,8 @@ namespace Controllers.Platform
         }
 
         private bool IsPlayerLanding(Collision2D collision) =>
-            collision.gameObject.CompareTag(PLAYER_TAG) && 
-            collision.rigidbody.linearVelocity.y <= LANDING_VELOCITY_THRESHOLD;
+            collision.gameObject.CompareTag(GameConstants.PLAYER_TAG) && 
+            collision.rigidbody.linearVelocity.y <= GameConstants.LANDING_VELOCITY_THRESHOLD;
 
         public void BreakPlatform()
         {

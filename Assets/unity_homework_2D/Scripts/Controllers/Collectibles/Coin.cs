@@ -1,3 +1,5 @@
+using Constants;
+using Data;
 using Managers;
 using Pooling;
 using UnityEngine;
@@ -7,13 +9,8 @@ namespace Controllers.Collectibles
     [RequireComponent(typeof(CircleCollider2D))]
     public class Coin : MonoBehaviour, IPoolable
     {
-        [Header("Settings")]
-        [SerializeField] private int coinValue = 1;
-        
         private CircleCollider2D _collider;
         private bool _isCollected;
-        
-        private const string PLAYER_TAG = "Player";
         
         private void Awake()
         {
@@ -23,13 +20,11 @@ namespace Controllers.Collectibles
         
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (other.CompareTag(PLAYER_TAG) && !_isCollected)
+            if (other.CompareTag(GameConstants.PLAYER_TAG) && !_isCollected)
             {
                 _isCollected = true;
                 
-                // Add coins to game (implement in GameManager)
-                // GameManager.Instance?.AddCoins(coinValue);
-                
+                DataManager.Instance?.AddCoin();
                 AudioManager.Instance?.PlayCoinSound();
                 CoinPool.Instance?.ReturnCoin(this);
             }
@@ -42,11 +37,7 @@ namespace Controllers.Collectibles
             gameObject.SetActive(true);
         }
         
-        public void OnReturnToPool()
-        {
-            gameObject.SetActive(false);
-        }
-        
+        public void OnReturnToPool() => gameObject.SetActive(false);
         public void OnCreatedInPool() { }
         public bool CanReturnToPool() => _isCollected;
     }

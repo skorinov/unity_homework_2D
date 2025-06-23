@@ -1,30 +1,20 @@
+using Constants;
 using Pooling;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Managers
 {
     public class PlatformGenerator : MonoBehaviour
     {
-        [Header("Generation Settings")]
         [SerializeField] private float minDistance = 3f;
         [SerializeField] private float maxDistance = 4f;
         [SerializeField] private int platformsAhead = 8;
         [SerializeField] private float cleanupDistance = 20f;
-
-        [Header("Platform Size")]
         [SerializeField] private float minWidth = 3f;
         [SerializeField] private float maxWidth = 5f;
         [SerializeField] private float maxJumpX = 3f;
         [SerializeField] private float maxJumpY = 5f;
-
-        private const float SCREEN_MARGIN = 0.3f;
-        private const float PLATFORM_SEARCH_RANGE = 2f;
-        private const float PLATFORM_SPACING = 0.5f;
-        private const float VERTICAL_CHECK_RANGE = 1f;
-        private const float DEFAULT_PLATFORM_WIDTH = 2f;
-        private const float FIRST_PLATFORM_MULTIPLIER = 0.5f;
-        private const float HALF_WIDTH_MULTIPLIER = 0.5f;
-        private const int MAX_PLACEMENT_ATTEMPTS = 10;
 
         private Camera _mainCamera;
         private float _screenHalfWidth;
@@ -42,11 +32,11 @@ namespace Managers
             _lastCleanupY = playerPosition.y;
             _highestPlatformY = playerPosition.y;
             
-            // Generate platforms one by one using same logic as UpdateGeneration
             for (int i = 0; i < platformsAhead; i++)
             {
-                _highestPlatformY += i == 0 ? minDistance * FIRST_PLATFORM_MULTIPLIER : 
-                                            Mathf.Min(Random.Range(minDistance, maxDistance), maxJumpY);
+                _highestPlatformY += i == 0 ? 
+                    minDistance * GameConstants.FIRST_PLATFORM_MULTIPLIER : 
+                    Mathf.Min(Random.Range(minDistance, maxDistance), maxJumpY);
                 GeneratePlatform(_highestPlatformY);
             }
         }
@@ -75,21 +65,18 @@ namespace Managers
         private void GeneratePlatform(float yPosition)
         {
             float width = Random.Range(minWidth, maxWidth);
-            float halfWidth = width * HALF_WIDTH_MULTIPLIER;
-            float minX = -_screenHalfWidth + halfWidth + SCREEN_MARGIN;
-            float maxX = _screenHalfWidth - halfWidth - SCREEN_MARGIN;
-            
+            var bounds = CalculateBounds(width);
             var nearPlatforms = GetNearPlatforms(yPosition - maxDistance);
-            if (nearPlatforms.Length > 0)
+            
+            if (nearPlatforms.Count > 0)
             {
-                var refPos = nearPlatforms[Random.Range(0, nearPlatforms.Length)];
-                minX = Mathf.Max(minX, refPos.x - maxJumpX);
-                maxX = Mathf.Min(maxX, refPos.x + maxJumpX);
+                var refPos = nearPlatforms[Random.Range(0, nearPlatforms.Count)];
+                bounds = ConstrainByJumpDistance(bounds, refPos.x);
             }
             
-            for (int attempt = 0; attempt < MAX_PLACEMENT_ATTEMPTS; attempt++)
+            for (int attempt = 0; attempt < GameConstants.MAX_PLACEMENT_ATTEMPTS; attempt++)
             {
-                float x = Random.Range(minX, maxX);
+                float x = Random.Range(bounds.min, bounds.max);
                 Vector3 position = new Vector3(x, yPosition, 0f);
                 
                 if (IsValidPosition(position, width))
@@ -100,19 +87,34 @@ namespace Managers
             }
         }
 
-        private Vector3[] GetNearPlatforms(float yPosition)
+        private (float min, float max) CalculateBounds(float width)
+        {
+            float halfWidth = width * GameConstants.HALF_WIDTH_MULTIPLIER;
+            float minX = -_screenHalfWidth + halfWidth + GameConstants.SCREEN_MARGIN;
+            float maxX = _screenHalfWidth - halfWidth - GameConstants.SCREEN_MARGIN;
+            return (minX, maxX);
+        }
+
+        private (float min, float max) ConstrainByJumpDistance((float min, float max) bounds, float refX)
+        {
+            float minX = Mathf.Max(bounds.min, refX - maxJumpX);
+            float maxX = Mathf.Min(bounds.max, refX + maxJumpX);
+            return (minX, maxX);
+        }
+
+        private List<Vector3> GetNearPlatforms(float yPosition)
         {
             var activePlatforms = PlatformPool.Instance?.GetActivePlatforms();
-            if (activePlatforms == null) return new Vector3[0];
+            if (activePlatforms == null) return new List<Vector3>();
             
-            var nearPlatforms = new System.Collections.Generic.List<Vector3>();
+            var nearPlatforms = new List<Vector3>();
             foreach (var platform in activePlatforms)
             {
-                if (platform && Mathf.Abs(platform.transform.position.y - yPosition) < PLATFORM_SEARCH_RANGE)
+                if (platform && Mathf.Abs(platform.transform.position.y - yPosition) < GameConstants.PLATFORM_SEARCH_RANGE)
                     nearPlatforms.Add(platform.transform.position);
             }
             
-            return nearPlatforms.ToArray();
+            return nearPlatforms;
         }
 
         private bool IsValidPosition(Vector3 position, float width)
@@ -120,18 +122,27 @@ namespace Managers
             var activePlatforms = PlatformPool.Instance?.GetActivePlatforms();
             if (activePlatforms == null) return true;
 
-            float halfWidth = width * HALF_WIDTH_MULTIPLIER;
+            float halfWidth = width * GameConstants.HALF_WIDTH_MULTIPLIER;
+            
             foreach (var platform in activePlatforms)
             {
-                if (!platform || Mathf.Abs(position.y - platform.transform.position.y) > VERTICAL_CHECK_RANGE) continue;
+                if (!platform || Mathf.Abs(position.y - platform.transform.position.y) > GameConstants.VERTICAL_CHECK_RANGE) 
+                    continue;
                 
-                float platformWidth = platform.GetComponent<SpriteRenderer>()?.size.x ?? DEFAULT_PLATFORM_WIDTH;
+                float platformWidth = GetPlatformWidth(platform);
                 float horizontalDistance = Mathf.Abs(position.x - platform.transform.position.x);
                 
-                if (horizontalDistance < halfWidth + platformWidth * HALF_WIDTH_MULTIPLIER + PLATFORM_SPACING) return false;
+                if (horizontalDistance < halfWidth + platformWidth * GameConstants.HALF_WIDTH_MULTIPLIER + GameConstants.PLATFORM_SPACING) 
+                    return false;
             }
             
             return true;
+        }
+
+        private float GetPlatformWidth(Controllers.Platform.BasePlatform platform)
+        {
+            var spriteRenderer = platform.GetComponent<SpriteRenderer>();
+            return spriteRenderer ? spriteRenderer.size.x : GameConstants.DEFAULT_PLATFORM_WIDTH;
         }
     }
 }

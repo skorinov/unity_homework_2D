@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using Controllers.Platform;
+using System.Collections.Generic;
 using UnityEngine;
 using Utilities;
 
@@ -31,31 +31,6 @@ namespace Pooling
         {
             InitializePools();
             CalculateTotalWeight();
-        }
-
-        private void InitializePools()
-        {
-            for (int i = 0; i < platformPrefabs.Length; i++)
-            {
-                var prefabData = platformPrefabs[i];
-                if (!prefabData.prefab?.GetComponent<BasePlatform>()) continue;
-
-                prefabData.pool = new ObjectPool<BasePlatform>(
-                    prefabData.prefab, 
-                    transform, 
-                    prefabData.poolSize
-                );
-            }
-        }
-
-        private void CalculateTotalWeight()
-        {
-            _totalSpawnWeight = 0f;
-            foreach (var prefabData in platformPrefabs)
-            {
-                if (prefabData.pool != null)
-                    _totalSpawnWeight += prefabData.spawnChance;
-            }
         }
 
         public BasePlatform GetPlatform(Vector3 position)
@@ -126,6 +101,31 @@ namespace Pooling
             
             _activePlatforms.Clear();
             _platformToPoolIndex.Clear();
+        }
+
+        private void InitializePools()
+        {
+            for (int i = 0; i < platformPrefabs.Length; i++)
+            {
+                var prefabData = platformPrefabs[i];
+                if (!prefabData.prefab?.GetComponent<BasePlatform>()) continue;
+
+                prefabData.pool = new ObjectPool<BasePlatform>(
+                    prefabData.prefab, 
+                    transform, 
+                    prefabData.poolSize
+                );
+            }
+        }
+
+        private void CalculateTotalWeight()
+        {
+            _totalSpawnWeight = 0f;
+            foreach (var prefabData in platformPrefabs)
+            {
+                if (prefabData.pool != null)
+                    _totalSpawnWeight += prefabData.spawnChance;
+            }
         }
 
         private int SelectRandomPrefabIndex()
