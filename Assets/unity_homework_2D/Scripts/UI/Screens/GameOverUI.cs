@@ -8,7 +8,6 @@ namespace UI.Screens
 {
     public class GameOverUI : BaseUI
     {
-        [SerializeField] private TextMeshProUGUI gameOverText;
         [SerializeField] private TextMeshProUGUI sessionHeightText;
         [SerializeField] private TextMeshProUGUI sessionCoinsText;
         [SerializeField] private Button restartButton;

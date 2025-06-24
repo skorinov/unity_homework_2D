@@ -48,15 +48,17 @@ namespace Controllers.Platform
         {
             ResetPlatform();
             gameObject.SetActive(true);
-            Invoke(nameof(NotifyPlatformReady), 0f);
         }
-        
-        public void NotifyPlatformReady()
+
+        public void SetPosition(Vector3 position)
         {
+            transform.position = position;
+            
+            // Notify actions that platform is ready with actual position
             if (_hasActiveActions)
             {
                 for (int i = 0; i < platformActions.Count; i++)
-                    platformActions[i]?.OnPlatformReady(this);
+                    platformActions[i]?.OnPlatformReady(this, position);
             }
         }
 
@@ -148,19 +150,6 @@ namespace Controllers.Platform
                 for (int i = 0; i < platformActions.Count; i++)
                     platformActions[i]?.OnReset(this);
             }
-        }
-
-        public void SetCustomWidth(float width)
-        {
-            if (!_spriteRenderer) return;
-
-            _spriteRenderer.size = new Vector2(width, _spriteRenderer.size.y);
-            
-            if (_boxCollider)
-                _boxCollider.size = new Vector2(width, _boxCollider.size.y);
-            
-            _originalSpriteSize = _spriteRenderer.size;
-            _originalColliderSize = _boxCollider.size;
         }
 
         public void DisableCollision() => Invoke(nameof(ResetCollision), 0.2f);

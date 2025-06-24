@@ -23,14 +23,14 @@ namespace Pooling
             }
         }
         
-        public Coin SpawnCoin(Vector3 position)
+        public Coin GetCoin()
         {
             if (_coinPool == null) return null;
             
             var coin = _coinPool.Get();
             if (!coin) return null;
             
-            coin.transform.position = position;
+            coin.transform.position = Vector3.zero;
             _activeCoins.Add(coin);
             
             return coin;

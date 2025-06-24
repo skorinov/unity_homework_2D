@@ -10,10 +10,14 @@ namespace Controllers.Player
     public class PlayerController : Singleton<PlayerController>
     {
         [SerializeField] private InputManager inputManager;
-        [SerializeField] private float baseMoveSpeed = 4f;
-        [SerializeField] private float maxHorizontalVelocity = 4f;
+        [SerializeField] private float groundMoveSpeed = 8f;
+        [SerializeField] private float airMoveSpeed = 6f;
+        [SerializeField] private float maxHorizontalVelocity = 8f;
         [SerializeField] private float baseJumpForce = 12f;
         [SerializeField] private float doubleJumpForce = 8f;
+        [SerializeField] private float acceleration = 25f;
+        [SerializeField] private float airAcceleration = 15f;
+        [SerializeField] private float friction = 20f;
         [SerializeField] private Transform groundCheck;
         [SerializeField] private float groundCheckRadius = 0.2f;
         [SerializeField] private LayerMask groundLayerMask = 1;
@@ -24,6 +28,7 @@ namespace Controllers.Player
         private bool _isGrounded;
         private bool _hasDoubleJumped;
         private float _coyoteTimeCounter;
+        private float _horizontalInput;
 
         private float _moveSpeedMultiplier = 1f;
         private float _jumpForceMultiplier = 1f;
@@ -46,6 +51,7 @@ namespace Controllers.Player
         private void FixedUpdate()
         {
             CheckGroundStatus();
+            HandleMovement();
             ClampHorizontalVelocity();
         }
 
@@ -65,8 +71,30 @@ namespace Controllers.Player
             }
         }
 
-        private void HandleHorizontalInput(float input) =>
-            _rb.AddForce(new Vector2(input * baseMoveSpeed * _moveSpeedMultiplier, 0f), ForceMode2D.Force);
+        private void HandleHorizontalInput(float input) => _horizontalInput = input;
+
+        private void HandleMovement()
+        {
+            float currentSpeed = _isGrounded ? groundMoveSpeed : airMoveSpeed;
+            float currentAcceleration = _isGrounded ? acceleration : airAcceleration;
+
+            float targetVelocity = _horizontalInput * currentSpeed * _moveSpeedMultiplier;
+            float velocityDifference = targetVelocity - _rb.linearVelocity.x;
+
+            // Apply acceleration or friction
+            if (Mathf.Abs(_horizontalInput) > 0.1f)
+            {
+                // Player is giving input - accelerate toward target velocity
+                float force = velocityDifference * currentAcceleration;
+                _rb.AddForce(new Vector2(force, 0f), ForceMode2D.Force);
+            }
+            else if (_isGrounded)
+            {
+                // No input and grounded - apply friction
+                float frictionForce = -_rb.linearVelocity.x * friction;
+                _rb.AddForce(new Vector2(frictionForce, 0f), ForceMode2D.Force);
+            }
+        }
 
         private void TryDropThrough()
         {

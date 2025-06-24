@@ -30,6 +30,11 @@ namespace Controllers.Collectibles
             }
         }
         
+        public void SetPosition(Vector3 position)
+        {
+            transform.position = position;
+        }
+        
         public void OnGetFromPool()
         {
             _isCollected = false;
@@ -39,6 +44,6 @@ namespace Controllers.Collectibles
         
         public void OnReturnToPool() => gameObject.SetActive(false);
         public void OnCreatedInPool() { }
-        public bool CanReturnToPool() => _isCollected;
+        public bool CanReturnToPool() => true;
     }
 }

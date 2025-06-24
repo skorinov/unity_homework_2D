@@ -88,6 +88,9 @@ namespace Managers
         {
             if (!player || _isCameraTransitioning) return;
             
+            // Clear only for NEW game
+            PlatformPool.Instance?.ClearAllPlatforms();
+            CoinPool.Instance?.ClearAllCoins();
             // Always reset game state for new game
             _hasGameEverStarted = true;
             StartCoroutine(TransitionToGame(true)); // Force new game
@@ -109,6 +112,9 @@ namespace Managers
         public void RestartGame()
         {
             if (!player || _isCameraTransitioning) return;
+            
+            PlatformPool.Instance?.ClearAllPlatforms();
+            CoinPool.Instance?.ClearAllCoins();
 
             _isDead = false;
             ResetGameSystems();
@@ -133,9 +139,6 @@ namespace Managers
                 _isDead = false;
                 _hasGameEverStarted = true;
                 DataManager.Instance?.StartNewSession();
-                
-                // Clear all platforms and reset everything for new game
-                ClearPlatforms();
                 
                 yield return StartCoroutine(MoveCameraToPosition(GameConstants.GAME_AREA_X, GameConstants.CAMERA_SIZE, 0f));
                 
@@ -265,7 +268,6 @@ namespace Managers
         {
             ResetPlayer();
             ResetCameraPosition();
-            ClearPlatforms();
         }
 
         private void ResetPlayer()

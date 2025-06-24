@@ -29,7 +29,7 @@ namespace Constants
         // Platform Generation
         public const float PLATFORM_SEARCH_RANGE = 2f;
         public const float PLATFORM_SPACING = 0.5f;
-        public const float VERTICAL_CHECK_RANGE = 1f;
+        public const float VERTICAL_CHECK_RANGE = 3f;
         public const float DEFAULT_PLATFORM_WIDTH = 2f;
         public const float FIRST_PLATFORM_POSITION = -1f;
         public const float HALF_WIDTH_MULTIPLIER = 0.5f;

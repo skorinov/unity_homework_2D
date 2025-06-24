@@ -8,7 +8,6 @@ namespace UI.Screens
 {
     public class StatisticsUI : BaseUI
     {
-        [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI maxHeightText;
         [SerializeField] private TextMeshProUGUI totalCoinsText;
         [SerializeField] private Button backButton;

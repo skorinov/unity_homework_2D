@@ -1,89 +1,74 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace UI.Effects
 {
+    [RequireComponent(typeof(Image))]
     public class CloudMover : MonoBehaviour
     {
-        [SerializeField] private float menuMoveSpeed = 0.8f;
-        [SerializeField] private float gameMoveSpeed = 1.5f;
-        [SerializeField] private float resetPosition = -20f;
-        [SerializeField] private float startPosition = 20f;
+        [SerializeField] private float moveSpeed = 50f;
+        [SerializeField] private float floatingSpeed = 1f;
+        [SerializeField] private float floatingAmplitude = 20f;
+        [SerializeField] private float spawnOffset = 20f;
         
-        [SerializeField] private bool enableFloating = true;
-        [SerializeField] private float floatingSpeed = 1.5f;
-        [SerializeField] private float floatingAmplitude = 0.3f;
-        
-        private Vector3 _originalPosition;
+        private RectTransform _rectTransform;
+        private Canvas _parentCanvas;
+        private Vector2 _startPosition;
         private float _randomOffset;
-        private bool _isGameMode = false;
-        private float _currentMoveSpeed;
+        private float _canvasHalfWidth;
+        
+        private void Awake()
+        {
+            _rectTransform = GetComponent<RectTransform>();
+            _parentCanvas = GetComponentInParent<Canvas>();
+            _startPosition = _rectTransform.anchoredPosition;
+            _randomOffset = Random.Range(0f, Mathf.PI * 2f);
+        }
         
         private void Start()
         {
-            _originalPosition = transform.position;
-            _randomOffset = Random.Range(0f, Mathf.PI * 2f);
-            _currentMoveSpeed = menuMoveSpeed;
-            
-            ResetPosition();
+            UpdateCanvasSize();
         }
         
         private void Update()
         {
-            // Use unscaledDeltaTime for menu animations to continue during pause
-            float deltaTime = _isGameMode ? Time.deltaTime : Time.unscaledDeltaTime;
-            
-            MoveClouds(deltaTime);
-            
-            if (enableFloating && !_isGameMode)
-                FloatingAnimation(deltaTime);
+            MoveCloud();
+            ApplyFloating();
         }
         
-        public void SetGameMode(bool isGameMode)
+        private void MoveCloud()
         {
-            _isGameMode = isGameMode;
-            _currentMoveSpeed = isGameMode ? gameMoveSpeed : menuMoveSpeed;
+            Vector2 pos = _rectTransform.anchoredPosition;
+            pos.x -= moveSpeed * Time.unscaledDeltaTime;
             
-            if (isGameMode)
+            // Reset to right edge when goes beyond left edge
+            if (pos.x < -_canvasHalfWidth - spawnOffset)
             {
-                transform.position = new Vector3(
-                    transform.position.x,
-                    _originalPosition.y,
-                    transform.position.z
-                );
+                pos.x = _canvasHalfWidth + spawnOffset;
             }
-        }
-        
-        public void SetMoveSpeed(float menuSpeed, float gameSpeed)
-        {
-            menuMoveSpeed = menuSpeed;
-            gameMoveSpeed = gameSpeed;
-            _currentMoveSpeed = _isGameMode ? gameSpeed : menuSpeed;
-        }
-        
-        private void MoveClouds(float deltaTime)
-        {
-            transform.Translate(Vector3.left * (_currentMoveSpeed * deltaTime));
             
-            if (transform.position.x < resetPosition)
-                ResetPosition();
+            _rectTransform.anchoredPosition = pos;
         }
         
-        private void FloatingAnimation(float deltaTime)
+        private void ApplyFloating()
         {
-            // Use Time.unscaledTime for menu floating animation
-            float floatingY = _originalPosition.y + Mathf.Sin(Time.unscaledTime * floatingSpeed + _randomOffset) * floatingAmplitude;
+            float floatingY = _startPosition.y + Mathf.Sin(Time.unscaledTime * floatingSpeed + _randomOffset) * floatingAmplitude;
             
-            transform.position = new Vector3(
-                transform.position.x,
-                floatingY,
-                transform.position.z
-            );
+            Vector2 pos = _rectTransform.anchoredPosition;
+            pos.y = floatingY;
+            _rectTransform.anchoredPosition = pos;
         }
         
-        private void ResetPosition()
+        private void UpdateCanvasSize()
         {
-            float newX = Random.Range(startPosition * 0.5f, startPosition);
-            transform.position = new Vector3(newX, _originalPosition.y, _originalPosition.z);
+            if (_parentCanvas?.GetComponent<RectTransform>())
+            {
+                _canvasHalfWidth = _parentCanvas.GetComponent<RectTransform>().rect.width * 0.5f;
+            }
+            else
+            {
+                _canvasHalfWidth = Screen.width * 0.5f;
+            }
         }
     }
 }

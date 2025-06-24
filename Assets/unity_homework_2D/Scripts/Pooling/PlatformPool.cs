@@ -33,7 +33,7 @@ namespace Pooling
             CalculateTotalWeight();
         }
 
-        public BasePlatform GetPlatform(Vector3 position)
+        public BasePlatform GetPlatform()
         {
             var selectedIndex = SelectRandomPrefabIndex();
             if (selectedIndex == -1 || platformPrefabs[selectedIndex].pool == null) return null;
@@ -41,7 +41,7 @@ namespace Pooling
             var platform = platformPrefabs[selectedIndex].pool.Get();
             if (!platform) return null;
 
-            platform.transform.position = position;
+            platform.transform.position = Vector3.zero;
             _activePlatforms.Add(platform);
             _platformToPoolIndex[platform] = selectedIndex;
 
