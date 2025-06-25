@@ -122,7 +122,6 @@ namespace Managers
             OnHeightChanged?.Invoke(_highestPlayerY);
 
             StartCoroutine(TransitionToGame(true)); // Force new game
-            AudioManager.Instance?.PlayBackgroundMusic();
         }
 
         private System.Collections.IEnumerator TransitionToGame(bool isNewGame = false)
@@ -258,9 +257,7 @@ namespace Managers
 
             DisableGameComponents();
             Time.timeScale = 0f;
-
-            AudioManager.Instance?.StopBackgroundMusic();
-            AudioManager.Instance?.PlayGameOverSound();
+            
             UIManager.Instance?.ShowGameOver();
         }
 

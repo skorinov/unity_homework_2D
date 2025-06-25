@@ -125,8 +125,6 @@ namespace Controllers.Platform.Actions
             
             if (spriteRenderer) spriteRenderer.color = Color.clear;
             if (boxCollider) boxCollider.enabled = false;
-            
-            AudioManager.Instance?.PlayPlatformBreakSound();
         }
 
         private void UpdateCrumbleVisual(BasePlatform platform, CrumbleData data)

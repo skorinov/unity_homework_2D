@@ -1,5 +1,6 @@
 using Managers;
 using TMPro;
+using UI.Navigation;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +15,14 @@ namespace UI.Screens
         [SerializeField] private Button statisticsButton;
         [SerializeField] private Button quitButton;
 
+        private MenuNavigationController _navigation;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            _navigation = GetComponent<MenuNavigationController>();
+        }
+
         private void Start()
         {
             resumeButton?.onClick.AddListener(OnResumeClicked);
@@ -26,6 +35,13 @@ namespace UI.Screens
         {
             base.Show();
             UpdateButtonsVisibility();
+            _navigation?.Initialize();
+        }
+
+        public override void Hide()
+        {
+            base.Hide();
+            _navigation?.SetActive(false);
         }
 
         private void OnResumeClicked()
@@ -71,5 +87,7 @@ namespace UI.Screens
                     startButtonText.text = gameEverStarted ? "New Game" : "Start Game";
             }
         }
+
+        public MenuNavigationController GetNavigation() => _navigation;
     }
 }

@@ -40,7 +40,6 @@ namespace Controllers.Platform.Actions
             }
 
             player.Jump(player.BaseJumpForce * jumpForceMultiplier);
-            AudioManager.Instance?.PlayBounceSound();
             StartBounceEffect(platform);
         }
 

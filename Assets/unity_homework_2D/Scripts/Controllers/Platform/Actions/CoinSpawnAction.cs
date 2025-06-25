@@ -24,6 +24,8 @@ namespace Controllers.Platform.Actions
         {
             if (_spawnedCoins.TryGetValue(platform, out var coin) && coin && coin.gameObject.activeInHierarchy)
             {
+                // Detach from platform before returning to pool
+                coin.transform.SetParent(null);
                 CoinPool.Instance?.ReturnCoin(coin);
             }
             _spawnedCoins.Remove(platform);
@@ -47,10 +49,12 @@ namespace Controllers.Platform.Actions
             var coin = CoinPool.Instance.GetCoin();
             if (coin)
             {
-                Vector3 coinPosition = platformPosition;
-                coinPosition.y += spawnHeight;
-                coinPosition.z = 0f;
-                coin.SetPosition(coinPosition);
+                // Make coin a child of platform so it moves with it
+                coin.transform.SetParent(platform.transform);
+                
+                Vector3 localPosition = Vector3.up * spawnHeight;
+                coin.transform.localPosition = localPosition;
+                
                 _spawnedCoins[platform] = coin;
             }
         }
@@ -63,15 +67,29 @@ namespace Controllers.Platform.Actions
             foreach (var coin in _spawnedCoins.Values)
             {
                 if (coin && coin.gameObject.activeInHierarchy)
+                {
+                    // Detach from platform before returning to pool
+                    coin.transform.SetParent(null);
                     CoinPool.Instance?.ReturnCoin(coin);
+                }
             }
             _spawnedCoins.Clear();
         }
 
         private void OnDisable()
         {
+            if (_spawnedCoins == null) return;
+            
             // Also clear when ScriptableObject is disabled
-            OnDestroy();
+            foreach (var coin in _spawnedCoins.Values)
+            {
+                if (coin && coin.gameObject.activeInHierarchy)
+                {
+                    coin.transform.SetParent(null);
+                    CoinPool.Instance?.ReturnCoin(coin);
+                }
+            }
+            _spawnedCoins.Clear();
         }
     }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Utilities;
 using UI.Screens;
+using UI.Navigation;
 
 namespace Managers
 {
@@ -23,6 +24,7 @@ namespace Managers
 
         private UIState _currentState = UIState.None;
         private bool _hasInitialized;
+        private MenuNavigationController _currentNavigation;
 
         public bool IsGameInProgress => _currentState == UIState.InGame;
 
@@ -46,6 +48,9 @@ namespace Managers
             if (inputManager)
             {
                 inputManager.OnUICancel += HandleEscapeInput;
+                inputManager.OnUINavigateUp += HandleNavigateUp;
+                inputManager.OnUINavigateDown += HandleNavigateDown;
+                inputManager.OnUIConfirm += HandleConfirm;
             }
         }
 
@@ -61,6 +66,10 @@ namespace Managers
                     break;
             }
         }
+
+        private void HandleNavigateUp() => _currentNavigation?.NavigateUp();
+        private void HandleNavigateDown() => _currentNavigation?.NavigateDown();
+        private void HandleConfirm() => _currentNavigation?.Confirm();
 
         public void SetState(UIState newState)
         {
@@ -94,14 +103,17 @@ namespace Managers
                 mainMenuUI.gameObject.SetActive(true);
                 mainMenuUI.Show();
                 ClearButtonStates(mainMenuUI.gameObject);
+                _currentNavigation = mainMenuUI.GetNavigation();
             }
 
+            AudioManager.Instance?.PlayMenuMusic();
             inputManager?.EnableUIInput();
         }
 
         private void ShowInGameInternal()
         {
             HideAllScreens();
+            _currentNavigation = null;
 
             if (gameUI)
             {
@@ -109,6 +121,7 @@ namespace Managers
                 gameUI.Show();
             }
 
+            AudioManager.Instance?.PlayBackgroundMusic();
             inputManager?.EnableGameInput();
         }
 
@@ -121,8 +134,10 @@ namespace Managers
                 gameOverUI.gameObject.SetActive(true);
                 gameOverUI.Show();
                 ClearButtonStates(gameOverUI.gameObject);
+                _currentNavigation = gameOverUI.GetNavigation();
             }
 
+            AudioManager.Instance?.PlayMenuMusic();
             inputManager?.EnableUIInput();
         }
 
@@ -135,8 +150,10 @@ namespace Managers
                 statisticsUI.gameObject.SetActive(true);
                 statisticsUI.Show();
                 ClearButtonStates(statisticsUI.gameObject);
+                _currentNavigation = statisticsUI.GetNavigation();
             }
 
+            AudioManager.Instance?.PlayMenuMusic();
             inputManager?.EnableUIInput();
         }
 
@@ -185,21 +202,21 @@ namespace Managers
         {
             if (GameManager.Instance?.IsCameraTransitioning == true) return;
             SetState(UIState.InGame);
-            GameManager.Instance?.StartGame(); // Always starts new game
+            GameManager.Instance?.StartGame();
         }
 
         public void ResumeGame()
         {
             if (GameManager.Instance?.IsCameraTransitioning == true) return;
             SetState(UIState.InGame);
-            GameManager.Instance?.ResumeGame(); // Resumes paused game
+            GameManager.Instance?.ResumeGame();
         }
 
         public void RestartGame()
         {
             if (GameManager.Instance?.IsCameraTransitioning == true) return;
             SetState(UIState.InGame);
-            GameManager.Instance?.RestartGame(); // Restarts from game over
+            GameManager.Instance?.RestartGame();
         }
 
         public void ShowGameOver()
@@ -214,7 +231,7 @@ namespace Managers
         {
             if (GameManager.Instance?.IsCameraTransitioning == true) return;
             SetState(UIState.MainMenu);
-            GameManager.Instance?.PauseGame(); // Pauses current game
+            GameManager.Instance?.PauseGame();
         }
 
         public void QuitGame()
@@ -233,6 +250,9 @@ namespace Managers
             if (inputManager)
             {
                 inputManager.OnUICancel -= HandleEscapeInput;
+                inputManager.OnUINavigateUp -= HandleNavigateUp;
+                inputManager.OnUINavigateDown -= HandleNavigateDown;
+                inputManager.OnUIConfirm -= HandleConfirm;
             }
         }
     }

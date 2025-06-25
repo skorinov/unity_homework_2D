@@ -51,11 +51,19 @@ namespace Managers
         {
             if (!_uiInputEnabled) return;
 
-            if (Input.GetKeyDown(KeyCode.UpArrow)) OnUINavigateUp?.Invoke();
-            if (Input.GetKeyDown(KeyCode.DownArrow)) OnUINavigateDown?.Invoke();
-            if (Input.GetKeyDown(KeyCode.LeftArrow)) OnUINavigateLeft?.Invoke();
-            if (Input.GetKeyDown(KeyCode.RightArrow)) OnUINavigateRight?.Invoke();
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) OnUIConfirm?.Invoke();
+            // Navigation with arrows and WASD
+            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) 
+                OnUINavigateUp?.Invoke();
+            if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) 
+                OnUINavigateDown?.Invoke();
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) 
+                OnUINavigateLeft?.Invoke();
+            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) 
+                OnUINavigateRight?.Invoke();
+                
+            // Confirm with Enter or Space
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space)) 
+                OnUIConfirm?.Invoke();
         }
 
         public void EnableGameInput()

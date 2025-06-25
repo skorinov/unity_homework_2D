@@ -44,7 +44,7 @@ namespace Constants
         
         // Audio
         public const float DEFAULT_MUSIC_VOLUME = 0.5f;
-        public const float DEFAULT_SFX_VOLUME = 0.7f;
+        public const float DEFAULT_SFX_VOLUME = 0.2f;
         public const float DEFAULT_UI_VOLUME = 0.5f;
     }
 }

@@ -6,16 +6,16 @@ namespace Managers
 {
     public class AudioManager : Singleton<AudioManager>
     {
+        [SerializeField] private AudioClip menuMusic;
         [SerializeField] private AudioClip backgroundMusic;
         [SerializeField] private AudioClip jumpSound;
-        [SerializeField] private AudioClip bounceSound;
-        [SerializeField] private AudioClip platformBreakSound;
         [SerializeField] private AudioClip gameOverSound;
         [SerializeField] private AudioClip coinSound;
         [SerializeField] private AudioClip buttonHoverSound;
         [SerializeField] private AudioClip buttonClickSound;
 
-        private AudioSource _musicSource;
+        private AudioSource _menuMusicSource;
+        private AudioSource _backgroundMusicSource;
         private AudioSource _sfxSource;
         private AudioSource _uiSource;
 
@@ -24,11 +24,12 @@ namespace Managers
             CreateAudioSources();
         }
 
-        private void Start() => PlayBackgroundMusic();
+        private void Start() => PlayMenuMusic();
 
         private void CreateAudioSources()
         {
-            _musicSource = CreateAudioSource(backgroundMusic, GameConstants.DEFAULT_MUSIC_VOLUME, true);
+            _menuMusicSource = CreateAudioSource(menuMusic, GameConstants.DEFAULT_MUSIC_VOLUME, true);
+            _backgroundMusicSource = CreateAudioSource(backgroundMusic, GameConstants.DEFAULT_MUSIC_VOLUME, true);
             _sfxSource = CreateAudioSource(null, GameConstants.DEFAULT_SFX_VOLUME, false);
             _uiSource = CreateAudioSource(null, GameConstants.DEFAULT_UI_VOLUME, false);
         }
@@ -43,21 +44,43 @@ namespace Managers
             return source;
         }
 
+        public void PlayMenuMusic()
+        {
+            StopBackgroundMusic();
+            if (_menuMusicSource && menuMusic && !_menuMusicSource.isPlaying)
+                _menuMusicSource.Play();
+        }
+
         public void PlayBackgroundMusic()
         {
-            if (_musicSource && backgroundMusic && !_musicSource.isPlaying)
-                _musicSource.Play();
+            StopMenuMusic();
+            if (_backgroundMusicSource && backgroundMusic && !_backgroundMusicSource.isPlaying)
+                _backgroundMusicSource.Play();
+        }
+
+        public void StopMenuMusic()
+        {
+            if (_menuMusicSource && _menuMusicSource.isPlaying)
+                _menuMusicSource.Stop();
         }
 
         public void StopBackgroundMusic()
         {
-            if (_musicSource && _musicSource.isPlaying)
-                _musicSource.Stop();
+            if (_backgroundMusicSource && _backgroundMusicSource.isPlaying)
+                _backgroundMusicSource.Stop();
+        }
+
+        public void StopAllMusic()
+        {
+            StopMenuMusic();
+            StopBackgroundMusic();
         }
 
         public void SetMusicVolume(float volume)
         {
-            if (_musicSource) _musicSource.volume = Mathf.Clamp01(volume);
+            volume = Mathf.Clamp01(volume);
+            if (_menuMusicSource) _menuMusicSource.volume = volume;
+            if (_backgroundMusicSource) _backgroundMusicSource.volume = volume;
         }
 
         public void SetSFXVolume(float volume)
@@ -71,8 +94,6 @@ namespace Managers
         }
 
         public void PlayJumpSound() => PlaySFX(jumpSound);
-        public void PlayBounceSound() => PlaySFX(bounceSound);
-        public void PlayPlatformBreakSound() => PlaySFX(platformBreakSound);
         public void PlayGameOverSound() => PlaySFX(gameOverSound);
         public void PlayCoinSound() => PlaySFX(coinSound);
         public void PlayButtonHover() => PlayUISound(buttonHoverSound);

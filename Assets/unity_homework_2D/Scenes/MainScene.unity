@@ -283,9 +283,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!114 &74003772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -563,6 +560,7 @@ GameObject:
   - component: {fileID: 128511450}
   - component: {fileID: 128511452}
   - component: {fileID: 128511451}
+  - component: {fileID: 128511453}
   m_Layer: 5
   m_Name: GameOverUI
   m_TagString: Untagged
@@ -605,6 +603,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeSpeed: 5
+  gameOverText: {fileID: 0}
   sessionHeightText: {fileID: 1461665483}
   sessionCoinsText: {fileID: 1518077430}
   restartButton: {fileID: 1527754190}
@@ -623,6 +622,21 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &128511453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128511449}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14b51cd72c5b448382f9d9d9d439a544, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _buttons: []
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  selectedColor: {r: 1, g: 1, b: 0.5, a: 1}
 --- !u!1 &164546059
 GameObject:
   m_ObjectHideFlags: 0
@@ -667,6 +681,81 @@ Transform:
   m_Children: []
   m_Father: {fileID: 435764073}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &192988337
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 192988338}
+  - component: {fileID: 192988340}
+  - component: {fileID: 192988339}
+  m_Layer: 5
+  m_Name: StatsTitleImage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &192988338
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192988337}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 931589092}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -0.000015259, y: 409}
+  m_SizeDelta: {x: 600, y: 600}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &192988339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192988337}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 0b0ac574db8e5b1499990d0a2dbef95e, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &192988340
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192988337}
+  m_CullTransparentMesh: 1
 --- !u!1 &199748650
 GameObject:
   m_ObjectHideFlags: 0
@@ -678,6 +767,7 @@ GameObject:
   - component: {fileID: 199748651}
   - component: {fileID: 199748653}
   - component: {fileID: 199748652}
+  - component: {fileID: 199748654}
   m_Layer: 14
   m_Name: MainMenuUI
   m_TagString: Untagged
@@ -737,6 +827,21 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &199748654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 199748650}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14b51cd72c5b448382f9d9d9d439a544, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _buttons: []
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  selectedColor: {r: 1, g: 1, b: 0.5, a: 1}
 --- !u!1 &237279909
 GameObject:
   m_ObjectHideFlags: 0
@@ -1490,9 +1595,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!114 &540857950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2163,6 +2265,9 @@ MonoBehaviour:
   maxHorizontalDistance: 2
   platformsAhead: 8
   cleanupDistance: 20
+  minPlatformSpacing: 3
+  multiPlatformChance: 20
+  maxPlatformsPerLevel: 3
 --- !u!4 &886333687
 Transform:
   m_ObjectHideFlags: 0
@@ -2374,6 +2479,7 @@ GameObject:
   - component: {fileID: 931589094}
   - component: {fileID: 931589093}
   - component: {fileID: 931589096}
+  - component: {fileID: 931589097}
   m_Layer: 5
   m_Name: StatisticsUI
   m_TagString: Untagged
@@ -2393,6 +2499,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 192988338}
   - {fileID: 1578580712}
   - {fileID: 699446112}
   m_Father: {fileID: 73270589}
@@ -2415,6 +2522,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeSpeed: 5
+  titleText: {fileID: 0}
   maxHeightText: {fileID: 1147030720}
   totalCoinsText: {fileID: 967665234}
   backButton: {fileID: 1578580717}
@@ -2440,6 +2548,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 931589091}
   m_CullTransparentMesh: 1
+--- !u!114 &931589097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 931589091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14b51cd72c5b448382f9d9d9d439a544, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _buttons: []
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  selectedColor: {r: 1, g: 1, b: 0.5, a: 1}
 --- !u!1 &967665232
 GameObject:
   m_ObjectHideFlags: 0
@@ -2610,8 +2733,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -11.57, y: 348.72}
-  m_SizeDelta: {x: 400, y: 400}
+  m_AnchoredPosition: {x: -0.000038147, y: 361}
+  m_SizeDelta: {x: 600, y: 600}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1000631812
 MonoBehaviour:
@@ -2633,7 +2756,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: dd70c9fd0c50cf74fb0808647eb76b16, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4f3896d2b40b60d4399881cc5224aee2, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3199,9 +3322,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!1 &1202022549
 GameObject:
   m_ObjectHideFlags: 0
@@ -3664,14 +3784,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c2152b13a1041b3a1606fe99a74f3ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  backgroundMusic: {fileID: 8300000, guid: 7896141420b17db4ca4c147658d1a5ee, type: 3}
+  menuMusic: {fileID: 8300000, guid: b8b76aebeefa30a42824121f8c9f006b, type: 3}
+  backgroundMusic: {fileID: 8300000, guid: 190607dc48cc8914c9777ec48278f108, type: 3}
   jumpSound: {fileID: 8300000, guid: 3d87c9a06b8125a45b1f62eb77e3837a, type: 3}
-  bounceSound: {fileID: 8300000, guid: 4ace5f47b1baed9479805e0baa257cfc, type: 3}
-  platformBreakSound: {fileID: 8300000, guid: b97b6ac0616ca8d4788f2f2642e64719, type: 3}
   gameOverSound: {fileID: 8300000, guid: 8c0b345a301bea44c9cfce2294d100e0, type: 3}
   coinSound: {fileID: 8300000, guid: da5b27cb364ec3340bfc92e82e474c50, type: 3}
-  buttonHoverSound: {fileID: 0}
-  buttonClickSound: {fileID: 0}
+  buttonHoverSound: {fileID: 8300000, guid: 94258d6c05d8ecf4380f2d05abbe7ff7, type: 3}
+  buttonClickSound: {fileID: 8300000, guid: b71c75935c8e29444804ba6df4fb125a, type: 3}
 --- !u!4 &1372299287
 Transform:
   m_ObjectHideFlags: 0
@@ -4541,9 +4660,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!1 &1461665481
 GameObject:
   m_ObjectHideFlags: 0
@@ -5132,9 +5248,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!114 &1527754188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5342,9 +5455,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!114 &1578580715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6311,9 +6421,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!1 &2012974077
 GameObject:
   m_ObjectHideFlags: 0
@@ -6477,9 +6584,6 @@ MonoBehaviour:
   hoverScale: 1.05
   pressedScale: 0.95
   scaleTransitionSpeed: 10
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 0}
-  soundVolume: 0.5
 --- !u!1 &2030863327
 GameObject:
   m_ObjectHideFlags: 0

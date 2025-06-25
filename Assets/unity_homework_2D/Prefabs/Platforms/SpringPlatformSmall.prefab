@@ -259,6 +259,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   platformActions:
   - {fileID: 11400000, guid: 41fb7d477d9c43049923b21c21d8607b, type: 2}
+  - {fileID: 11400000, guid: 7e1e332a9502bac4b821b6cacc4910ed, type: 2}
 --- !u!1 &5777009144005732901
 GameObject:
   m_ObjectHideFlags: 0

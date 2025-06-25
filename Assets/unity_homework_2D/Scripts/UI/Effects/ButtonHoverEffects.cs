@@ -1,4 +1,5 @@
 using Managers;
+using UI.Navigation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ namespace UI.Effects
     public class ButtonHoverEffects : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         [SerializeField] private Color normalColor = Color.white;
-        [SerializeField] private Color hoverColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+        [SerializeField] private Color hoverColor = new Color(1f, 1f, 0.5f, 1f);
         [SerializeField] private Color pressedColor = new Color(0.6f, 0.6f, 0.6f, 1f);
         [SerializeField] private float colorTransitionSpeed = 8f;
         
@@ -18,10 +19,6 @@ namespace UI.Effects
         [SerializeField] private float pressedScale = 0.95f;
         [SerializeField] private float scaleTransitionSpeed = 10f;
         
-        [SerializeField] private AudioClip hoverSound;
-        [SerializeField] private AudioClip clickSound;
-        [SerializeField] private float soundVolume = 0.5f;
-        
         private Button _button;
         private Image _buttonImage;
         private Vector3 _originalScale;
@@ -29,12 +26,15 @@ namespace UI.Effects
         private float _targetScale;
         private bool _isHovered;
         private bool _isPressed;
+        private bool _isKeyboardSelected;
+        private MenuNavigationController _navigation;
         
         private void Awake()
         {
             _button = GetComponent<Button>();
             _buttonImage = GetComponent<Image>();
             _originalScale = transform.localScale;
+            _navigation = GetComponentInParent<MenuNavigationController>();
             
             if (_buttonImage)
             {
@@ -47,7 +47,6 @@ namespace UI.Effects
         
         private void Update()
         {
-            // Always use unscaledDeltaTime for UI animations to work during pause
             UpdateColorTransition();
             if (enableScaleEffect)
                 UpdateScaleTransition();
@@ -58,23 +57,18 @@ namespace UI.Effects
             if (!_button.interactable) return;
             
             _isHovered = true;
-            _targetColor = hoverColor;
-            
-            if (enableScaleEffect)
-                _targetScale = hoverScale;
-            
-            PlayHoverSound();
+            UpdateNavigationSelection();
+            SetHoverState();
+            AudioManager.Instance?.PlayButtonHover();
         }
         
         public void OnPointerExit(PointerEventData eventData)
         {
             _isHovered = false;
             
-            if (!_isPressed)
+            if (!_isPressed && !_isKeyboardSelected)
             {
-                _targetColor = normalColor;
-                if (enableScaleEffect)
-                    _targetScale = 1f;
+                SetNormalState();
             }
         }
         
@@ -83,29 +77,70 @@ namespace UI.Effects
             if (!_button.interactable) return;
             
             _isPressed = true;
-            _targetColor = pressedColor;
-            
-            if (enableScaleEffect)
-                _targetScale = pressedScale;
-            
-            PlayClickSound();
+            SetPressedState();
+            AudioManager.Instance?.PlayButtonClick();
         }
         
         public void OnPointerUp(PointerEventData eventData)
         {
             _isPressed = false;
             
-            if (_isHovered)
+            if (_isHovered || _isKeyboardSelected)
             {
-                _targetColor = hoverColor;
-                if (enableScaleEffect)
-                    _targetScale = hoverScale;
+                SetHoverState();
             }
             else
             {
-                _targetColor = normalColor;
-                if (enableScaleEffect)
-                    _targetScale = 1f;
+                SetNormalState();
+            }
+        }
+        
+        public void SetKeyboardSelected(bool selected)
+        {
+            _isKeyboardSelected = selected;
+            
+            if (!_isPressed)
+            {
+                if (selected || _isHovered)
+                    SetHoverState();
+                else
+                    SetNormalState();
+            }
+        }
+        
+        private void SetNormalState()
+        {
+            _targetColor = normalColor;
+            if (enableScaleEffect)
+                _targetScale = 1f;
+        }
+        
+        private void SetHoverState()
+        {
+            _targetColor = hoverColor;
+            if (enableScaleEffect)
+                _targetScale = hoverScale;
+        }
+        
+        private void SetPressedState()
+        {
+            _targetColor = pressedColor;
+            if (enableScaleEffect)
+                _targetScale = pressedScale;
+        }
+        
+        private void UpdateNavigationSelection()
+        {
+            if (!_navigation) return;
+            
+            var navigationButtons = _navigation.buttons;
+            for (int i = 0; i < navigationButtons.Count; i++)
+            {
+                if (navigationButtons[i] == _button && _button.gameObject.activeInHierarchy && _button.interactable)
+                {
+                    _navigation.SetCurrentIndex(i);
+                    break;
+                }
             }
         }
         
@@ -122,25 +157,13 @@ namespace UI.Effects
             transform.localScale = Vector3.Lerp(transform.localScale, targetScaleVector, scaleTransitionSpeed * Time.unscaledDeltaTime);
         }
         
-        private void PlayHoverSound()
-        {
-            if (hoverSound && AudioManager.Instance)
-                AudioManager.Instance.PlayUISound(hoverSound, soundVolume);
-        }
-        
-        private void PlayClickSound()
-        {
-            if (clickSound && AudioManager.Instance)
-                AudioManager.Instance.PlayUISound(clickSound, soundVolume);
-        }
-        
         public void SetColors(Color normal, Color hover, Color pressed)
         {
             normalColor = normal;
             hoverColor = hover;
             pressedColor = pressed;
             
-            if (!_isHovered && !_isPressed)
+            if (!_isHovered && !_isPressed && !_isKeyboardSelected)
                 _targetColor = normalColor;
         }
         
