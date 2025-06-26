@@ -14,8 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   actionName: 
   description: 
-  conditionDescription: Describe when this action should activate
   moveSpeed: 2
-  moveRange: 4
+  moveRange: 6
   startMovingRight: 1
-  isolationRadius: 4

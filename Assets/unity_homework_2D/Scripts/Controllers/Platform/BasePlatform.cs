@@ -11,8 +11,9 @@ namespace Controllers.Platform
     [RequireComponent(typeof(SpriteRenderer), typeof(BoxCollider2D), typeof(PlatformEffector2D))]
     public class BasePlatform : MonoBehaviour, IPoolable
     {
-        [SerializeField] private List<PlatformAction> platformActions = new();
+        [SerializeField] private PlatformPreset platformPreset;
 
+        private List<PlatformAction> _runtimeActions = new();
         private SpriteRenderer _spriteRenderer;
         private BoxCollider2D _boxCollider;
         private PlatformEffector2D _platformEffector;
@@ -38,8 +39,8 @@ namespace Controllers.Platform
         {
             if (!_hasActiveActions) return;
 
-            for (int i = 0; i < platformActions.Count; i++)
-                platformActions[i]?.OnUpdate(this);
+            for (int i = 0; i < _runtimeActions.Count; i++)
+                _runtimeActions[i]?.OnUpdate(this);
         }
 
         public void OnCreatedInPool() => InitializeActions();
@@ -54,11 +55,15 @@ namespace Controllers.Platform
         {
             transform.position = position;
             
+            // Apply preset if available and actions not yet loaded
+            if (platformPreset && _runtimeActions.Count == 0)
+                ApplyPreset(platformPreset);
+            
             // Notify actions that platform is ready with actual position
             if (_hasActiveActions)
             {
-                for (int i = 0; i < platformActions.Count; i++)
-                    platformActions[i]?.OnPlatformReady(this, position);
+                for (int i = 0; i < _runtimeActions.Count; i++)
+                    _runtimeActions[i]?.OnPlatformReady(this, position);
             }
         }
 
@@ -68,10 +73,11 @@ namespace Controllers.Platform
             
             if (_hasActiveActions)
             {
-                for (int i = 0; i < platformActions.Count; i++)
-                    platformActions[i]?.OnReset(this);
+                for (int i = 0; i < _runtimeActions.Count; i++)
+                    _runtimeActions[i]?.OnReset(this);
             }
             
+            ClearRuntimeActions();
             gameObject.SetActive(false);
         }
 
@@ -94,13 +100,8 @@ namespace Controllers.Platform
 
         private void InitializeActions()
         {
-            _hasActiveActions = platformActions.Count > 0;
-            
-            if (_hasActiveActions)
-            {
-                for (int i = 0; i < platformActions.Count; i++)
-                    platformActions[i]?.Initialize(this);
-            }
+            if (platformPreset)
+                ApplyPreset(platformPreset);
         }
 
         private void CacheOriginalValues()
@@ -147,8 +148,8 @@ namespace Controllers.Platform
             
             if (_hasActiveActions)
             {
-                for (int i = 0; i < platformActions.Count; i++)
-                    platformActions[i]?.OnReset(this);
+                for (int i = 0; i < _runtimeActions.Count; i++)
+                    _runtimeActions[i]?.OnReset(this);
             }
         }
 
@@ -167,8 +168,8 @@ namespace Controllers.Platform
 
                 if (_hasActiveActions)
                 {
-                    for (int i = 0; i < platformActions.Count; i++)
-                        platformActions[i]?.OnPlayerLanded(player, this);
+                    for (int i = 0; i < _runtimeActions.Count; i++)
+                        _runtimeActions[i]?.OnPlayerLanded(player, this);
                 }
             }
         }
@@ -182,8 +183,8 @@ namespace Controllers.Platform
 
                 if (_hasActiveActions)
                 {
-                    for (int i = 0; i < platformActions.Count; i++)
-                        platformActions[i]?.OnPlayerStaying(player, this);
+                    for (int i = 0; i < _runtimeActions.Count; i++)
+                        _runtimeActions[i]?.OnPlayerStaying(player, this);
                 }
             }
         }
@@ -196,8 +197,8 @@ namespace Controllers.Platform
 
                 if (_hasActiveActions)
                 {
-                    for (int i = 0; i < platformActions.Count; i++)
-                        platformActions[i]?.OnPlayerLeft(player, this);
+                    for (int i = 0; i < _runtimeActions.Count; i++)
+                        _runtimeActions[i]?.OnPlayerLeft(player, this);
                 }
 
                 _playerOnPlatform = null;
@@ -215,64 +216,35 @@ namespace Controllers.Platform
             PlatformPool.Instance?.ReturnPlatform(this);
         }
 
-        public void AddAction(PlatformAction action)
-        {
-            if (action && !platformActions.Contains(action))
-            {
-                platformActions.Add(action);
-                action.Initialize(this);
-                _hasActiveActions = platformActions.Count > 0;
-            }
-        }
-
-        public void RemoveAction(PlatformAction action)
-        {
-            if (action && platformActions.Contains(action))
-            {
-                action.OnReset(this);
-                platformActions.Remove(action);
-                _hasActiveActions = platformActions.Count > 0;
-            }
-        }
-
-        public void ClearActions()
-        {
-            if (_hasActiveActions)
-            {
-                for (int i = 0; i < platformActions.Count; i++)
-                    platformActions[i]?.OnReset(this);
-            }
-            
-            platformActions.Clear();
-            _hasActiveActions = false;
-        }
-
         public void ApplyPreset(PlatformPreset preset)
         {
             if (!preset) return;
 
+            ClearRuntimeActions();
             preset.ApplyToPlatform(this);
-
-            if (_spriteRenderer)
-                _originalColor = _spriteRenderer.color;
         }
 
-        public bool HasAction<T>() where T : PlatformAction
+        // Called by PlatformPreset to add actions
+        public void AddAction(PlatformAction action)
         {
-            for (int i = 0; i < platformActions.Count; i++)
-            {
-                if (platformActions[i] is T) return true;
-            }
-            return false;
+            if (!action) return;
+
+            var actionInstance = Instantiate(action);
+            _runtimeActions.Add(actionInstance);
+            actionInstance.Initialize(this);
+            _hasActiveActions = _runtimeActions.Count > 0;
         }
 
-        public T GetAction<T>() where T : PlatformAction
+        private void ClearRuntimeActions()
         {
-            for (int i = 0; i < platformActions.Count; i++)
+            if (_hasActiveActions)
             {
-                if (platformActions[i] is T action) return action;
+                for (int i = 0; i < _runtimeActions.Count; i++)
+                    _runtimeActions[i]?.OnReset(this);
             }
-            return null;
+            
+            _runtimeActions.Clear();
+            _hasActiveActions = false;
         }
     }
 }

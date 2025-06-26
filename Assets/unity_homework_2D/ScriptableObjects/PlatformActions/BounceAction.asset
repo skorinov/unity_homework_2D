@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   actionName: 
   description: 
+  bounceChance: 30
   jumpForceMultiplier: 1.5
   bounceScale: 1.1
   bounceDuration: 0.2

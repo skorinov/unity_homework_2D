@@ -15,5 +15,9 @@ namespace Controllers.Platform.Actions
         public virtual void OnReset(BasePlatform platform) { }
         public virtual void Initialize(BasePlatform platform) { }
         public virtual void OnPlatformReady(BasePlatform platform, Vector3 worldPosition) { }
+        
+        // Virtual method for preset configuration
+        public virtual void SetChance(float chance) { }
+        public virtual bool HasChance() => false;
     }
 }

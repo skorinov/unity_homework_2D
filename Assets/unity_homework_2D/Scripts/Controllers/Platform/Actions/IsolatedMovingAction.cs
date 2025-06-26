@@ -5,10 +5,10 @@ using UnityEngine;
 namespace Controllers.Platform.Actions
 {
     [CreateAssetMenu(fileName = "IsolatedMovingAction", menuName = "Platform Actions/Isolated Moving Action")]
-    public class IsolatedMovingAction : ConditionalPlatformAction
+    public class IsolatedMovingAction : PlatformAction
     {
         [SerializeField] private float moveSpeed = 2f;
-        [SerializeField] private float moveRange = 3f;
+        [SerializeField] private float moveRange = 6f;
         [SerializeField] private bool startMovingRight = true;
 
         private readonly Dictionary<BasePlatform, MovingData> _movingData = new();
@@ -20,18 +20,75 @@ namespace Controllers.Platform.Actions
             public float rightBound;
             public int direction;
             public Rigidbody2D rigidbody;
+            public bool wasMoving;
         }
 
-        public override bool ShouldActivate(PlatformContext context)
-        {
-            // Activate movement only if platform is horizontally isolated
-            return context.IsHorizontallyIsolated;
-        }
-
-        protected override void OnActivated(BasePlatform platform)
+        public override void Initialize(BasePlatform platform)
         {
             if (!_mainCamera) _mainCamera = Camera.main;
+            
+            _movingData[platform] = new MovingData
+            {
+                wasMoving = false
+            };
+        }
 
+        public override void OnUpdate(BasePlatform platform)
+        {
+            bool shouldMove = IsAloneOnHorizontalLevel(platform);
+            
+            if (!_movingData.TryGetValue(platform, out var data)) return;
+            
+            if (shouldMove && !data.wasMoving)
+            {
+                StartMoving(platform);
+                data = _movingData[platform]; // Get updated data from StartMoving
+                data.wasMoving = true;
+                _movingData[platform] = data;
+            }
+            else if (!shouldMove && data.wasMoving)
+            {
+                StopMoving(platform);
+                data.wasMoving = false;
+                _movingData[platform] = data;
+            }
+            else if (shouldMove && data.wasMoving && data.rigidbody)
+            {
+                UpdateMovement(platform, data);
+            }
+            else if (data.wasMoving && !data.rigidbody)
+            {
+                // Rigidbody was destroyed, reset state
+                data.wasMoving = false;
+                _movingData[platform] = data;
+            }
+        }
+
+        private bool IsAloneOnHorizontalLevel(BasePlatform platform)
+        {
+            var activePlatforms = Pooling.PlatformPool.Instance?.GetActivePlatforms();
+            if (activePlatforms == null) return true;
+            
+            Vector3 platformPos = platform.transform.position;
+            
+            foreach (var otherPlatform in activePlatforms)
+            {
+                if (otherPlatform == platform) continue;
+                
+                float yDifference = Mathf.Abs(platformPos.y - otherPlatform.transform.position.y);
+                if (yDifference < 0.5f) // Same horizontal level
+                {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        private void StartMoving(BasePlatform platform)
+        {
+            if (!_movingData.TryGetValue(platform, out var data)) return;
+            
             var rb = platform.GetComponent<Rigidbody2D>();
             if (!rb)
             {
@@ -39,58 +96,63 @@ namespace Controllers.Platform.Actions
             }
             
             SetupRigidbody(rb);
-
             var bounds = CalculateBounds(platform);
             
-            _movingData[platform] = new MovingData
-            {
-                leftBound = bounds.min,
-                rightBound = bounds.max,
-                direction = startMovingRight ? 1 : -1,
-                rigidbody = rb
-            };
+            data.leftBound = bounds.min;
+            data.rightBound = bounds.max;
+            data.direction = startMovingRight ? 1 : -1;
+            data.rigidbody = rb;
+            
+            _movingData[platform] = data;
         }
 
-        protected override void OnDeactivated(BasePlatform platform)
+        private void StopMoving(BasePlatform platform)
         {
-            if (_movingData.ContainsKey(platform))
+            if (!_movingData.TryGetValue(platform, out var data)) return;
+            
+            if (data.rigidbody && data.rigidbody.bodyType == RigidbodyType2D.Kinematic)
             {
-                var data = _movingData[platform];
-                if (data.rigidbody && data.rigidbody.bodyType == RigidbodyType2D.Kinematic)
-                {
-                    // Reset rigidbody to static if it was kinematic
-                    data.rigidbody.bodyType = RigidbodyType2D.Static;
-                }
-                _movingData.Remove(platform);
+                data.rigidbody.bodyType = RigidbodyType2D.Static;
             }
+            
+            data.rigidbody = null;
+            _movingData[platform] = data;
         }
 
-        protected override void OnConditionalUpdate(BasePlatform platform)
+        private void UpdateMovement(BasePlatform platform, MovingData data)
         {
-            if (!_movingData.TryGetValue(platform, out var data) || !data.rigidbody) return;
-
             Vector2 currentPos = data.rigidbody.position;
-            float newX = currentPos.x + data.direction * moveSpeed * Time.fixedDeltaTime;
+            float targetX = currentPos.x + data.direction * moveSpeed * Time.fixedDeltaTime;
 
-            if (newX >= data.rightBound)
+            if (targetX >= data.rightBound)
             {
                 data.direction = -1;
-                newX = data.rightBound;
+                targetX = data.rightBound;
             }
-            else if (newX <= data.leftBound)
+            else if (targetX <= data.leftBound)
             {
                 data.direction = 1;
-                newX = data.leftBound;
+                targetX = data.leftBound;
             }
 
+            // Use velocity instead of MovePosition
+            Vector2 velocity = new Vector2((targetX - currentPos.x) / Time.fixedDeltaTime, 0);
+            data.rigidbody.linearVelocity = velocity;
+    
             _movingData[platform] = data;
-            data.rigidbody.MovePosition(new Vector2(newX, currentPos.y));
         }
 
         public override void OnReset(BasePlatform platform)
         {
-            OnDeactivated(platform);
-            base.OnReset(platform);
+            if (_movingData.TryGetValue(platform, out var data))
+            {
+                if (data.wasMoving)
+                {
+                    StopMoving(platform);
+                }
+                // Reset data but keep the entry for reuse
+                _movingData[platform] = new MovingData { wasMoving = false };
+            }
         }
 
         private void SetupRigidbody(Rigidbody2D rb)
@@ -128,5 +190,20 @@ namespace Controllers.Platform.Actions
         }
 
         private void OnDestroy() => _movingData.Clear();
+        
+        public override void OnPlayerStaying(Controllers.Player.PlayerController player, BasePlatform platform)
+        {
+            if (_movingData.TryGetValue(platform, out var data) && data.wasMoving && data.rigidbody)
+            {
+                // Move player with platform using the same velocity
+                var playerRb = player.GetComponent<Rigidbody2D>();
+                if (playerRb)
+                {
+                    Vector2 newVelocity = playerRb.linearVelocity;
+                    newVelocity.x = data.rigidbody.linearVelocity.x;
+                    playerRb.linearVelocity = newVelocity;
+                }
+            }
+        }
     }
 }

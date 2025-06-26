@@ -9,12 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8def56c1c81b48a8b893b9ab29d25883, type: 3}
-  m_Name: MovingAction
+  m_Script: {fileID: 11500000, guid: fba4b2cce3c84fc4a9f6f731bb54b31e, type: 3}
+  m_Name: ConditionalFragileAction
   m_EditorClassIdentifier: 
   actionName: 
   description: 
-  moveSpeed: 2
-  moveRange: 6
-  startMovingRight: 1
-  screenMargin: 0.5
+  neighborCheckRadius: 10
+  respawnDelay: 3
+  fragileChance: 20
+  sameHeightTolerance: 1
+  landingsToBreak: 2

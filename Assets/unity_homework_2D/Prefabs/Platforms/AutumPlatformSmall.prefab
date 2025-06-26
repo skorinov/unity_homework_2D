@@ -256,9 +256,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1955ade4c1fc4ff2b6388f9ca8d0ae57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  platformActions:
-  - {fileID: 11400000, guid: 41fb7d477d9c43049923b21c21d8607b, type: 2}
-  - {fileID: 11400000, guid: 7e1e332a9502bac4b821b6cacc4910ed, type: 2}
+  platformPreset: {fileID: 11400000, guid: 219ad9b0e7c22a141a3763c9f3cb3dd4, type: 2}
 --- !u!1 &9100142019068674045
 GameObject:
   m_ObjectHideFlags: 0

@@ -2266,7 +2266,7 @@ MonoBehaviour:
   platformsAhead: 8
   cleanupDistance: 20
   minPlatformSpacing: 3
-  multiPlatformChance: 20
+  multiPlatformChance: 80
   maxPlatformsPerLevel: 3
 --- !u!4 &886333687
 Transform:

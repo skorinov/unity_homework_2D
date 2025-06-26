@@ -13,6 +13,9 @@ namespace Controllers.Platform.Actions
 
         [System.NonSerialized]
         private Dictionary<BasePlatform, Coin> _spawnedCoins;
+        
+        public override void SetChance(float chance) => spawnChance = Mathf.Clamp(chance, 0f, 100f);
+        public override bool HasChance() => true;
 
         public override void OnPlatformReady(BasePlatform platform, Vector3 worldPosition)
         {

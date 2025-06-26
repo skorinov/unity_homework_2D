@@ -1,20 +1,23 @@
 using Controllers.Player;
-using Managers;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Controllers.Platform.Actions
 {
-    [CreateAssetMenu(fileName = "BounceAction", menuName = "Platform Actions/Bounce Action")]
+    [CreateAssetMenu(fileName = "BounceAction", menuName = "Platform Actions/Chance Bounce Action")]
     public class BounceAction : PlatformAction
     {
-        [SerializeField] private float jumpForceMultiplier = 1.5f;
-        [SerializeField] private float bounceScale = 1.1f;
-        [SerializeField] private float bounceDuration = 0.2f;
+        [SerializeField, Range(0f, 100f)] private float bounceChance = 50f;
+        [SerializeField] private float jumpForceMultiplier = 1.8f;
+        [SerializeField] private float bounceScale = 1.2f;
+        [SerializeField] private float bounceDuration = 0.3f;
 
-        private readonly Dictionary<BasePlatform, BounceData> _bounceData = new();
+        private readonly Dictionary<BasePlatform, BounceState> _bounceStates = new();
+        
+        public override void SetChance(float chance) => bounceChance = Mathf.Clamp(chance, 0f, 100f);
+        public override bool HasChance() => true;
 
-        private struct BounceData
+        private struct BounceState
         {
             public Vector3 normalScale;
             public float bounceTimer;
@@ -23,7 +26,7 @@ namespace Controllers.Platform.Actions
 
         public override void Initialize(BasePlatform platform)
         {
-            _bounceData[platform] = new BounceData
+            _bounceStates[platform] = new BounceState
             {
                 normalScale = platform.transform.localScale,
                 bounceTimer = 0f,
@@ -33,50 +36,47 @@ namespace Controllers.Platform.Actions
 
         public override void OnPlayerLanded(PlayerController player, BasePlatform platform)
         {
-            if (_bounceData.TryGetValue(platform, out var data))
-            {
-                data.normalScale = platform.transform.localScale;
-                _bounceData[platform] = data;
-            }
+            if (!_bounceStates.TryGetValue(platform, out var state)) return;
 
-            player.Jump(player.BaseJumpForce * jumpForceMultiplier);
-            StartBounceEffect(platform);
+            if (Random.Range(0f, 100f) <= bounceChance)
+            {
+                player.Jump(player.BaseJumpForce * jumpForceMultiplier);
+                StartBounceEffect(platform, ref state);
+                _bounceStates[platform] = state;
+            }
         }
 
         public override void OnUpdate(BasePlatform platform)
         {
-            if (!_bounceData.TryGetValue(platform, out var data) || !data.isBouncing) return;
+            if (!_bounceStates.TryGetValue(platform, out var state) || !state.isBouncing) return;
 
-            data.bounceTimer -= Time.deltaTime;
-            if (data.bounceTimer <= 0f)
+            state.bounceTimer -= Time.deltaTime;
+            if (state.bounceTimer <= 0f)
             {
-                platform.transform.localScale = data.normalScale;
-                data.isBouncing = false;
+                platform.transform.localScale = state.normalScale;
+                state.isBouncing = false;
+                _bounceStates[platform] = state;
             }
-            _bounceData[platform] = data;
         }
 
         public override void OnReset(BasePlatform platform)
         {
-            if (_bounceData.TryGetValue(platform, out var data))
+            if (_bounceStates.TryGetValue(platform, out var state))
             {
-                platform.transform.localScale = data.normalScale;
-                data.isBouncing = false;
-                data.bounceTimer = 0f;
-                _bounceData[platform] = data;
+                platform.transform.localScale = state.normalScale;
+                state.isBouncing = false;
+                state.bounceTimer = 0f;
+                _bounceStates[platform] = state;
             }
         }
 
-        private void StartBounceEffect(BasePlatform platform)
+        private void StartBounceEffect(BasePlatform platform, ref BounceState state)
         {
-            if (!_bounceData.TryGetValue(platform, out var data)) return;
-
-            platform.transform.localScale = data.normalScale * bounceScale;
-            data.bounceTimer = bounceDuration;
-            data.isBouncing = true;
-            _bounceData[platform] = data;
+            platform.transform.localScale = state.normalScale * bounceScale;
+            state.bounceTimer = bounceDuration;
+            state.isBouncing = true;
         }
 
-        private void OnDestroy() => _bounceData.Clear();
+        private void OnDestroy() => _bounceStates.Clear();
     }
 }
