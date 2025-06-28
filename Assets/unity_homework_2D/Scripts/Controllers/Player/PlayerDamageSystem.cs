@@ -1,3 +1,4 @@
+using Constants;
 using Managers;
 using UnityEngine;
 
@@ -57,7 +58,8 @@ namespace Controllers.Player
                 
                 // Toggle visibility
                 Color color = _spriteRenderer.color;
-                color.a = _isBlinking ? 0.3f : 1f;
+                color.a = _isBlinking ? GameConstants.BLINK_TRANSPARENT_ALPHA : 
+                    GameConstants.BLINK_OPAQUE_ALPHA;
                 _spriteRenderer.color = color;
             }
         }
@@ -108,17 +110,13 @@ namespace Controllers.Player
         {
             // Brief color flash
             StartCoroutine(DamageColorFlash());
-            
-            // Play damage sound if available
-            // AudioManager.Instance?.PlayPlayerHurt();
         }
         
         private System.Collections.IEnumerator DamageColorFlash()
         {
             _spriteRenderer.color = damageColor;
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(GameConstants.DAMAGE_COLOR_FLASH_DURATION);
             
-            // Color will be handled by blinking system after this
             if (!_isInvulnerable)
                 _spriteRenderer.color = _originalColor;
         }

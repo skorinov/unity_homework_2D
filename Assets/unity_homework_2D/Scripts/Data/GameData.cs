@@ -5,7 +5,7 @@ namespace Data
     {
         public int sessionCoins;
         public float sessionHeight;
-        public int totalCoins;
+        public int maxCoinsPerSession;
         public float maxHeight;
         
         public void ResetSession()
@@ -17,7 +17,6 @@ namespace Data
         public void AddCoin()
         {
             sessionCoins++;
-            totalCoins++;
         }
         
         public void UpdateHeight(float height)
@@ -25,6 +24,12 @@ namespace Data
             sessionHeight = height;
             if (height > maxHeight)
                 maxHeight = height;
+        }
+        
+        public void EndSession()
+        {
+            if (sessionCoins > maxCoinsPerSession)
+                maxCoinsPerSession = sessionCoins;
         }
     }
 }

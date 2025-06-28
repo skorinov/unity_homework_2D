@@ -61,25 +61,6 @@ namespace Pooling
             }
         }
 
-        public void ReturnPlatformsOutsideRange(float minY, float maxY)
-        {
-            for (int i = _activePlatforms.Count - 1; i >= 0; i--)
-            {
-                if (!_activePlatforms[i]) 
-                {
-                    _activePlatforms.RemoveAt(i);
-                    continue;
-                }
-                
-                float platformY = _activePlatforms[i].transform.position.y;
-                
-                if (platformY < minY || platformY > maxY)
-                {
-                    ReturnPlatform(_activePlatforms[i]);
-                }
-            }
-        }
-
         public void ReturnPlatformsBelowHeight(float height)
         {
             for (int i = _activePlatforms.Count - 1; i >= 0; i--)

@@ -29,8 +29,6 @@ namespace Managers
         private bool _hasInitialized;
         private MenuNavigationController _currentNavigation;
 
-        public bool IsGameInProgress => _currentState == UIState.InGame;
-
         protected override void OnSingletonAwake()
         {
             HideAllScreens();
@@ -271,12 +269,7 @@ namespace Managers
         public void QuitGame()
         {
             Data.DataManager.Instance?.SaveData();
-            
-            #if UNITY_EDITOR
-                UnityEditor.EditorApplication.isPlaying = false;
-            #else
-                Application.Quit();
-            #endif
+            Application.Quit();
         }
 
         protected override void OnSingletonDestroy()

@@ -1,3 +1,4 @@
+using Constants;
 using Managers;
 using TMPro;
 using UI.Navigation;
@@ -29,12 +30,10 @@ namespace UI.Screens
         private bool _isWaitingForKey = false;
         private bool _isSettingJumpKey = false;
         
-        protected override void Awake()
+        protected void Awake()
         {
-            base.Awake();
             _navigation = GetComponent<MenuNavigationController>();
-            
-            // Подписываемся на события навигации для автоскролла
+
             if (_navigation)
             {
                 _navigation.OnNavigateUp += OnNavigationChanged;
@@ -53,7 +52,7 @@ namespace UI.Screens
             base.Show();
             LoadSettings();
             _navigation?.Initialize();
-            if (scrollRect) scrollRect.verticalNormalizedPosition = 1f;
+            if (scrollRect) scrollRect.verticalNormalizedPosition = GameConstants.SCROLL_TOP_POSITION;
         }
         
         public override void Hide()
@@ -91,12 +90,12 @@ namespace UI.Screens
         private void LoadSettings()
         {
             // Load audio settings
-            float musicVolume = AudioManager.Instance?.GetMusicVolume() ?? 0.5f;
-            float sfxVolume = AudioManager.Instance?.GetSFXVolume() ?? 0.5f;
+            float musicVolume = AudioManager.Instance?.GetMusicVolume() ?? GameConstants.DEFAULT_MUSIC_VOLUME;
+            float sfxVolume = AudioManager.Instance?.GetSFXVolume() ?? GameConstants.DEFAULT_SFX_VOLUME;
             
             // Convert from 0-1 to 0-100 for sliders
-            if (musicVolumeSlider) musicVolumeSlider.SetValueWithoutNotify(musicVolume * 100f);
-            if (sfxVolumeSlider) sfxVolumeSlider.SetValueWithoutNotify(sfxVolume * 100f);
+            if (musicVolumeSlider) musicVolumeSlider.SetValueWithoutNotify(musicVolume * GameConstants.VOLUME_TO_PERCENTAGE_MULTIPLIER);
+            if (sfxVolumeSlider) sfxVolumeSlider.SetValueWithoutNotify(sfxVolume * GameConstants.VOLUME_TO_PERCENTAGE_MULTIPLIER);
             
             UpdateVolumeTexts();
             
@@ -121,7 +120,7 @@ namespace UI.Screens
         private void OnMusicVolumeChanged(float value)
         {
             // Convert from 0-100 to 0-1 for AudioManager
-            float normalizedValue = value / 100f;
+            float normalizedValue = value / GameConstants.VOLUME_TO_PERCENTAGE_MULTIPLIER;
             AudioManager.Instance?.SetMusicVolume(normalizedValue);
             if (musicVolumeValue) musicVolumeValue.text = $"{Mathf.RoundToInt(value)}%";
         }
@@ -129,7 +128,7 @@ namespace UI.Screens
         private void OnSFXVolumeChanged(float value)
         {
             // Convert from 0-100 to 0-1 for AudioManager
-            float normalizedValue = value / 100f;
+            float normalizedValue = value / GameConstants.VOLUME_TO_PERCENTAGE_MULTIPLIER;
             AudioManager.Instance?.SetSFXVolume(normalizedValue);
             if (sfxVolumeValue) sfxVolumeValue.text = $"{Mathf.RoundToInt(value)}%";
         }
@@ -139,20 +138,20 @@ namespace UI.Screens
             _isWaitingForKey = true;
             _isSettingJumpKey = isJumpKey;
             
-            // Временно отключаем UI input чтобы не мешал
+            // Temporary disable UI Input
             InputManager.Instance?.DisableAllInput();
             
             if (isJumpKey && jumpKeyText)
-                jumpKeyText.text = "Press Key...";
+                jumpKeyText.text = GameConstants.PRESS_KEY_TEXT;
             else if (dropKeyText)
-                dropKeyText.text = "Press Key...";
+                dropKeyText.text = GameConstants.PRESS_KEY_TEXT;
         }
         
         private void SetNewKey(KeyCode newKey)
         {
             _isWaitingForKey = false;
             
-            // Включаем UI input обратно
+            // Enable UI Input
             InputManager.Instance?.EnableUIInput();
             
             if (_isSettingJumpKey)
@@ -209,18 +208,6 @@ namespace UI.Screens
         
         public MenuNavigationController GetNavigation() => _navigation;
         
-        public void ScrollUp()
-        {
-            if (scrollRect) scrollRect.verticalNormalizedPosition = 
-                Mathf.Clamp01(scrollRect.verticalNormalizedPosition + 0.1f);
-        }
-        
-        public void ScrollDown()
-        {
-            if (scrollRect) scrollRect.verticalNormalizedPosition = 
-                Mathf.Clamp01(scrollRect.verticalNormalizedPosition - 0.1f);
-        }
-        
         private void OnNavigationChanged(int currentIndex)
         {
             ScrollToCurrentSelection(currentIndex);
@@ -249,7 +236,7 @@ namespace UI.Screens
         {
             float startPos = scrollRect.verticalNormalizedPosition;
             float time = 0f;
-            float duration = 0.3f;
+            float duration = GameConstants.SCROLL_ANIMATION_DURATION;
             
             while (time < duration)
             {

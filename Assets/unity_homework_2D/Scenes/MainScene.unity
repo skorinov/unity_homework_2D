@@ -881,8 +881,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 579c9f0b499444eeb997bfa86c84c405, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fadeSpeed: 5
-  gameOverText: {fileID: 0}
   sessionHeightText: {fileID: 1461665483}
   sessionCoinsText: {fileID: 1518077430}
   restartButton: {fileID: 1527754190}
@@ -1190,9 +1188,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b16ed641a15444f495771dd46507e4b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fadeSpeed: 5
-  titleText: {fileID: 0}
-  logoImage: {fileID: 1248967041}
   resumeButton: {fileID: 2012974082}
   startButton: {fileID: 1194508993}
   statisticsButton: {fileID: 2012202594}
@@ -2218,7 +2213,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf13e29df41443a4a85ec43e0102f675, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fadeSpeed: 5
   scrollRect: {fileID: 1717589597}
   content: {fileID: 278907169}
   backButton: {fileID: 97889157}
@@ -4813,13 +4807,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5025bdffd44f4b459a0b49241f39880b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fadeSpeed: 5
-  titleText: {fileID: 0}
   maxHeightText: {fileID: 1147030720}
-  totalCoinsText: {fileID: 967665234}
+  bestCoinsText: {fileID: 967665234}
   backButton: {fileID: 1578580717}
   maxHeightFormat: 'Best Height: {0}m'
-  totalCoinsFormat: 'Total Coins: {0}'
+  bestCoinsFormat: 'Best Coins: {0}'
 --- !u!225 &931589094
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -5091,7 +5083,7 @@ GameObject:
   - component: {fileID: 967665234}
   - component: {fileID: 967665236}
   m_Layer: 5
-  m_Name: StatisticsTotalCoins
+  m_Name: StatisticsBestCoins
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5136,7 +5128,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Total Coins: 0'
+  m_text: 'Best Coins: 0'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 73b00cc645a374a47bbf9f9e25be9b94, type: 2}
   m_sharedMaterial: {fileID: -3085549124552976533, guid: 73b00cc645a374a47bbf9f9e25be9b94, type: 2}
@@ -5737,7 +5729,7 @@ GameObject:
   - component: {fileID: 1147030721}
   - component: {fileID: 1147030720}
   m_Layer: 15
-  m_Name: StatisticsTotalHeight
+  m_Name: StatisticsBestHeight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6664,6 +6656,8 @@ MonoBehaviour:
   coinSound: {fileID: 8300000, guid: da5b27cb364ec3340bfc92e82e474c50, type: 3}
   buttonHoverSound: {fileID: 8300000, guid: 94258d6c05d8ecf4380f2d05abbe7ff7, type: 3}
   buttonClickSound: {fileID: 8300000, guid: b71c75935c8e29444804ba6df4fb125a, type: 3}
+  bounceSound: {fileID: 8300000, guid: 4ace5f47b1baed9479805e0baa257cfc, type: 3}
+  platformBreakSound: {fileID: 8300000, guid: b97b6ac0616ca8d4788f2f2642e64719, type: 3}
 --- !u!4 &1372299287
 Transform:
   m_ObjectHideFlags: 0
@@ -7057,7 +7051,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27266556effe4621b5cd9926bd694247, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fadeSpeed: 5
   heightText: {fileID: 931023036}
   coinsText: {fileID: 362374860}
   menuButton: {fileID: 74003774}

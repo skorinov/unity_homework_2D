@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Constants;
 using UI.Effects;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,9 +44,9 @@ namespace UI.Navigation
             // Handle slider input
             if (currentSelectable is Slider slider)
             {
-                float horizontalInput = Input.GetAxis("Horizontal");
+                float horizontalInput = Input.GetAxis(GameConstants.HORIZONTAL_INPUT);
                 
-                if (Mathf.Abs(horizontalInput) > 0.1f)
+                if (Mathf.Abs(horizontalInput) > GameConstants.INPUT_DEADZONE_THRESHOLD)
                 {
                     float newValue = slider.value + horizontalInput * sliderStep * Time.unscaledDeltaTime;
                     slider.value = Mathf.Clamp(newValue, slider.minValue, slider.maxValue);
@@ -229,25 +230,6 @@ namespace UI.Navigation
                     SetSelectableColor(selectable, false);
                 }
             }
-        }
-        
-        public void AddSelectable(Selectable selectable)
-        {
-            if (selectable && !_selectables.Contains(selectable))
-                _selectables.Add(selectable);
-        }
-        
-        public void RemoveSelectable(Selectable selectable)
-        {
-            if (_selectables.Contains(selectable))
-                _selectables.Remove(selectable);
-        }
-        
-        // Helper method to refresh selectables list
-        public void RefreshSelectables()
-        {
-            _selectables.Clear();
-            _selectables.AddRange(GetComponentsInChildren<Selectable>());
         }
     }
 }

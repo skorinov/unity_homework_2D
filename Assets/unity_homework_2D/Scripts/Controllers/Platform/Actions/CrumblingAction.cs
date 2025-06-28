@@ -1,5 +1,6 @@
 using Controllers.Player;
 using System.Collections.Generic;
+using Managers;
 using UnityEngine;
 
 namespace Controllers.Platform.Actions
@@ -96,6 +97,7 @@ namespace Controllers.Platform.Actions
             // Check for destruction
             if (state.crumbleProgress >= 1f)
             {
+                AudioManager.Instance?.PlayPlatformBreakSound();
                 state.isDestroyed = true;
                 state.autoRestoreTimer = autoRestoreDelay;
                 UpdateVisuals(platform, state, true);

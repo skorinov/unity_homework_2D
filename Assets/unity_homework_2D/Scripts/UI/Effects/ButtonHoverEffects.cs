@@ -1,3 +1,4 @@
+using Constants;
 using Managers;
 using UI.Navigation;
 using UnityEngine;
@@ -44,7 +45,7 @@ namespace UI.Effects
                 _targetColor = normalColor;
             }
             
-            _targetScale = 1f;
+            _targetScale = GameConstants.DEFAULT_MULTIPLIER;
         }
         
         private void FindTargetImage()
@@ -198,49 +199,6 @@ namespace UI.Effects
         {
             Vector3 targetScaleVector = _originalScale * _targetScale;
             transform.localScale = Vector3.Lerp(transform.localScale, targetScaleVector, scaleTransitionSpeed * Time.unscaledDeltaTime);
-        }
-        
-        public void SetColors(Color normal, Color hover, Color pressed)
-        {
-            normalColor = normal;
-            hoverColor = hover;
-            pressedColor = pressed;
-            
-            if (!_isHovered && !_isPressed && !_isKeyboardSelected)
-                _targetColor = normalColor;
-        }
-        
-        public void SetScaleSettings(bool enabled, float hover = 1.05f, float pressed = 0.95f)
-        {
-            enableScaleEffect = enabled;
-            hoverScale = hover;
-            pressedScale = pressed;
-        }
-        
-        // Special handling for sliders
-        public void OnSliderValueChanged()
-        {
-            // Visual feedback when slider value changes via keyboard
-            if (_isKeyboardSelected && _selectable is Slider)
-            {
-                // Quick flash effect
-                StartCoroutine(SliderFeedbackCoroutine());
-            }
-        }
-        
-        private System.Collections.IEnumerator SliderFeedbackCoroutine()
-        {
-            Color originalColor = _targetColor;
-            _targetColor = Color.Lerp(hoverColor, pressedColor, 0.5f);
-            yield return new WaitForSecondsRealtime(0.1f);
-            _targetColor = originalColor;
-        }
-        
-        // Public method to trigger feedback for external use
-        public void TriggerFeedback()
-        {
-            if (_isKeyboardSelected)
-                StartCoroutine(SliderFeedbackCoroutine());
         }
     }
 }

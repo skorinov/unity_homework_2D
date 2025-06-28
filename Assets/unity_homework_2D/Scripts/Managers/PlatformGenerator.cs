@@ -1,3 +1,4 @@
+using Constants;
 using Controllers.Platform;
 using Pooling;
 using UnityEngine;
@@ -6,15 +7,15 @@ namespace Managers
 {
     public class PlatformGenerator : MonoBehaviour
     {
-        [SerializeField] private float minVerticalDistance = 2f;
-        [SerializeField] private float maxVerticalDistance = 4f;
+        [SerializeField] private float minVerticalDistance = 3f;
+        [SerializeField] private float maxVerticalDistance = 5f;
         [SerializeField] private float maxHorizontalDistance = 2f;
         [SerializeField] private int platformsAhead = 8;
         [SerializeField] private float cleanupDistance = 20f;
         
         [Header("Multi-Platform Generation")]
-        [SerializeField] private float minPlatformSpacing = 1.5f;
-        [SerializeField, Range(0f, 100f)] private float multiPlatformChance = 25f;
+        [SerializeField] private float minPlatformSpacing = 3f;
+        [SerializeField, Range(0f, 100f)] private float multiPlatformChance = 80f;
         [SerializeField] private int maxPlatformsPerLevel = 3;
 
         private Camera _mainCamera;
@@ -39,7 +40,7 @@ namespace Managers
             _lastPlatformX = playerPosition.x;
             
             // Generate first platform at player position
-            var firstPlatform = CreatePlatformAt(playerPosition.x, _highestPlatformY);
+            CreatePlatformAt(playerPosition.x, _highestPlatformY);
             
             // Generate remaining platforms
             for (int i = 1; i < platformsAhead; i++)
@@ -60,13 +61,6 @@ namespace Managers
                 PlatformPool.Instance?.ReturnPlatformsBelowHeight(playerY - cleanupDistance);
                 _lastCleanupY = playerY;
             }
-        }
-
-        public void ResetGeneration(Vector3 newPlayerPosition)
-        {
-            PlatformPool.Instance?.ClearAllPlatforms();
-            CoinPool.Instance?.ClearAllCoins();
-            Initialize(newPlayerPosition);
         }
 
         private void GenerateNextLevel()
@@ -118,15 +112,15 @@ namespace Managers
 
         private float? FindValidPosition(System.Collections.Generic.List<(float min, float max)> occupiedRanges)
         {
-            float margin = 1f;
+            float margin = GameConstants.PLATFORM_GENERATION_MARGIN;
             float minX = -_screenHalfWidth + margin;
             float maxX = _screenHalfWidth - margin;
-            float platformWidth = 2f; // Approximate platform width
+            float platformWidth = GameConstants.DEFAULT_PLATFORM_WIDTH; // Approximate platform width
             
             // Try multiple random positions
-            for (int attempt = 0; attempt < 10; attempt++)
+            for (int attempt = 0; attempt < GameConstants.MAX_PLACEMENT_ATTEMPTS; attempt++)
             {
-                float candidateX = Random.Range(minX + platformWidth * 0.5f, maxX - platformWidth * 0.5f);
+                float candidateX = Random.Range(minX + platformWidth * GameConstants.HALF_WIDTH_MULTIPLIER, maxX - platformWidth * GameConstants.HALF_WIDTH_MULTIPLIER);
                 
                 if (IsPositionValid(candidateX, platformWidth, occupiedRanges))
                 {
@@ -139,7 +133,7 @@ namespace Managers
 
         private bool IsPositionValid(float x, float width, System.Collections.Generic.List<(float min, float max)> occupiedRanges)
         {
-            float halfWidth = width * 0.5f;
+            float halfWidth = width * GameConstants.HALF_WIDTH_MULTIPLIER;
             float minBound = x - halfWidth - minPlatformSpacing;
             float maxBound = x + halfWidth + minPlatformSpacing;
             
@@ -167,15 +161,15 @@ namespace Managers
 
         private float GetPlatformWidth(BasePlatform platform)
         {
-            if (!platform) return 2f;
+            if (!platform) return GameConstants.DEFAULT_PLATFORM_WIDTH;
             
             var boxCollider = platform.GetComponent<BoxCollider2D>();
-            return boxCollider ? boxCollider.size.x * platform.transform.localScale.x : 2f;
+            return boxCollider ? boxCollider.size.x * platform.transform.localScale.x : GameConstants.DEFAULT_PLATFORM_WIDTH;
         }
 
         private float GenerateValidX()
         {
-            float margin = 1f;
+            float margin = GameConstants.PLATFORM_GENERATION_MARGIN;
             float minX = -_screenHalfWidth + margin;
             float maxX = _screenHalfWidth - margin;
             

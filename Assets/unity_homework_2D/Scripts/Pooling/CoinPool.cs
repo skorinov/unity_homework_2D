@@ -44,24 +44,6 @@ namespace Pooling
             _coinPool?.Return(coin);
         }
         
-        public void ReturnCoinsOutsideRange(float minY, float maxY)
-        {
-            for (int i = _activeCoins.Count - 1; i >= 0; i--)
-            {
-                if (!_activeCoins[i])
-                {
-                    _activeCoins.RemoveAt(i);
-                    continue;
-                }
-                
-                float coinY = _activeCoins[i].transform.position.y;
-                if (coinY < minY || coinY > maxY)
-                {
-                    ReturnCoin(_activeCoins[i]);
-                }
-            }
-        }
-        
         public void ClearAllCoins()
         {
             var coinsToReturn = new List<Coin>(_activeCoins);

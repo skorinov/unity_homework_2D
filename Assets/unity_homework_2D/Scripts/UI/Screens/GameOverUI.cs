@@ -9,7 +9,6 @@ namespace UI.Screens
 {
     public class GameOverUI : BaseUI
     {
-        [SerializeField] private TextMeshProUGUI gameOverText;
         [SerializeField] private TextMeshProUGUI sessionHeightText;
         [SerializeField] private TextMeshProUGUI sessionCoinsText;
         [SerializeField] private Button restartButton;
@@ -19,9 +18,8 @@ namespace UI.Screens
         
         private MenuNavigationController _navigation;
 
-        protected override void Awake()
+        protected void Awake()
         {
-            base.Awake();
             _navigation = GetComponent<MenuNavigationController>();
         }
         

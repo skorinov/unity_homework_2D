@@ -1,5 +1,6 @@
 using Controllers.Player;
 using System.Collections.Generic;
+using Managers;
 using UnityEngine;
 
 namespace Controllers.Platform.Actions
@@ -41,6 +42,7 @@ namespace Controllers.Platform.Actions
             if (Random.Range(0f, 100f) <= bounceChance)
             {
                 player.Jump(player.BaseJumpForce * jumpForceMultiplier);
+                AudioManager.Instance?.PlayBounceSound();
                 StartBounceEffect(platform, ref state);
                 _bounceStates[platform] = state;
             }

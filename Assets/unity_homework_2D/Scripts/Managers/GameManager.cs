@@ -143,7 +143,7 @@ namespace Managers
                 _highestPlayerY = 0f;
                 InitializeGame();
             }
-            else if (_gameState == GameState.Paused && !isNewGame)
+            else if (_gameState == GameState.Paused)
             {
                 _gameState = GameState.Playing;
                 
@@ -180,7 +180,7 @@ namespace Managers
             Vector3 targetPos = new Vector3(targetX, targetY, startPos.z);
             float startSize = mainCamera.orthographicSize;
             float elapsed = 0f;
-            float duration = 1f / cameraTransitionSpeed;
+            float duration = GameConstants.CAMERA_TRANSITION_BASE_DURATION  / cameraTransitionSpeed;
 
             while (elapsed < duration)
             {
@@ -256,6 +256,8 @@ namespace Managers
             DisableGameComponents();
             Time.timeScale = 0f;
             
+            AudioManager.Instance?.PlayGameOverSound();
+            DataManager.Instance?.GameData.EndSession();
             UIManager.Instance?.ShowGameOver();
         }
 
@@ -297,14 +299,5 @@ namespace Managers
             CoinPool.Instance?.ClearAllCoins();
             EnemyPool.Instance?.ClearAllEnemies();
         }
-
-        public void ClearPlatforms()
-        {
-            ClearAllGameObjects();
-        }
-
-        public float GetHighestPlayerY() => _highestPlayerY;
-        public Transform GetPlayer() => player;
-        public GameState GetGameState() => _gameState;
     }
 }

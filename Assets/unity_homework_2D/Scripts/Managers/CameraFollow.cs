@@ -27,12 +27,5 @@ namespace Managers
         }
         
         public void SetTarget(Transform newTarget) => target = newTarget;
-        
-        public void SetFollowSettings(float speed, float yOffset, float minimumY)
-        {
-            followSpeed = speed;
-            offsetY = yOffset;
-            minY = minimumY;
-        }
     }
 }

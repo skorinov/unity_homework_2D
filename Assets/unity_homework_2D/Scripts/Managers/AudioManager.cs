@@ -13,6 +13,8 @@ namespace Managers
         [SerializeField] private AudioClip coinSound;
         [SerializeField] private AudioClip buttonHoverSound;
         [SerializeField] private AudioClip buttonClickSound;
+        [SerializeField] private AudioClip bounceSound;
+        [SerializeField] private AudioClip platformBreakSound;
 
         private AudioSource _menuMusicSource;
         private AudioSource _backgroundMusicSource;
@@ -35,7 +37,6 @@ namespace Managers
             _menuMusicSource = CreateAudioSource(menuMusic, _currentMusicVolume, true);
             _backgroundMusicSource = CreateAudioSource(backgroundMusic, _currentMusicVolume, true);
             _sfxSource = CreateAudioSource(null, _currentSFXVolume, false);
-            // UI source больше не нужен, убираем его
         }
 
         private AudioSource CreateAudioSource(AudioClip clip, float volume, bool loop)
@@ -100,6 +101,8 @@ namespace Managers
         public void PlayCoinSound() => PlaySFX(coinSound);
         public void PlayButtonHover() => PlaySFX(buttonHoverSound);
         public void PlayButtonClick() => PlaySFX(buttonClickSound);
+        public void PlayBounceSound() => PlaySFX(bounceSound);
+        public void PlayPlatformBreakSound() => PlaySFX(platformBreakSound);
         
         private void PlaySFX(AudioClip clip)
         {
@@ -113,14 +116,12 @@ namespace Managers
 
         private void LoadVolumeSettings()
         {
-            // Проверяем есть ли сохранённые настройки
-            bool hasMusicSetting = PlayerPrefs.HasKey("MusicVolume");
-            bool hasSFXSetting = PlayerPrefs.HasKey("SFXVolume");
+            bool hasMusicSetting = PlayerPrefs.HasKey(GameConstants.MUSIC_VOLUME_KEY);
+            bool hasSFXSetting = PlayerPrefs.HasKey(GameConstants.SFX_VOLUME_KEY);
             
             if (hasMusicSetting)
             {
-                _currentMusicVolume = PlayerPrefs.GetFloat("MusicVolume");
-                // Если сохранённое значение 0, используем дефолт
+                _currentMusicVolume = PlayerPrefs.GetFloat(GameConstants.MUSIC_VOLUME_KEY);
                 if (_currentMusicVolume <= 0f) _currentMusicVolume = GameConstants.DEFAULT_MUSIC_VOLUME;
             }
             else
@@ -130,8 +131,7 @@ namespace Managers
             
             if (hasSFXSetting)
             {
-                _currentSFXVolume = PlayerPrefs.GetFloat("SFXVolume");
-                // Если сохранённое значение 0, используем дефолт
+                _currentSFXVolume = PlayerPrefs.GetFloat(GameConstants.SFX_VOLUME_KEY);
                 if (_currentSFXVolume <= 0f) _currentSFXVolume = GameConstants.DEFAULT_SFX_VOLUME;
             }
             else
@@ -142,8 +142,8 @@ namespace Managers
 
         private void SaveVolumeSettings()
         {
-            PlayerPrefs.SetFloat("MusicVolume", _currentMusicVolume);
-            PlayerPrefs.SetFloat("SFXVolume", _currentSFXVolume);
+            PlayerPrefs.SetFloat(GameConstants.MUSIC_VOLUME_KEY, _currentMusicVolume);
+            PlayerPrefs.SetFloat(GameConstants.SFX_VOLUME_KEY, _currentSFXVolume);
             PlayerPrefs.Save();
         }
     }

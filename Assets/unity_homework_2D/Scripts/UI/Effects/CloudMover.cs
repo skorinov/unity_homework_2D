@@ -1,3 +1,4 @@
+using Constants;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,9 +8,9 @@ namespace UI.Effects
     public class CloudMover : MonoBehaviour
     {
         [SerializeField] private float moveSpeed = 50f;
-        [SerializeField] private float floatingSpeed = 1f;
-        [SerializeField] private float floatingAmplitude = 20f;
-        [SerializeField] private float spawnOffset = 20f;
+        [SerializeField] private float floatingSpeed = 1.5f;
+        [SerializeField] private float floatingAmplitude = 30f;
+        [SerializeField] private float spawnOffset = 0f;
         
         private RectTransform _rectTransform;
         private Canvas _parentCanvas;
@@ -63,11 +64,11 @@ namespace UI.Effects
         {
             if (_parentCanvas?.GetComponent<RectTransform>())
             {
-                _canvasHalfWidth = _parentCanvas.GetComponent<RectTransform>().rect.width * 0.5f;
+                _canvasHalfWidth = _parentCanvas.GetComponent<RectTransform>().rect.width * GameConstants.HALF_WIDTH_MULTIPLIER;
             }
             else
             {
-                _canvasHalfWidth = Screen.width * 0.5f;
+                _canvasHalfWidth = Screen.width * GameConstants.HALF_WIDTH_MULTIPLIER;
             }
         }
     }

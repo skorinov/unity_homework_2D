@@ -99,8 +99,7 @@ namespace Managers
             _gameInputEnabled = false;
             _uiInputEnabled = false;
         }
-
-        // Key binding methods - NEW
+        
         public KeyCode GetJumpKey() => jumpKey;
         public KeyCode GetDropKey() => dropKey;
 
@@ -118,8 +117,8 @@ namespace Managers
 
         private void LoadInputSettings()
         {
-            string jumpKeyString = PlayerPrefs.GetString("JumpKey", KeyCode.Space.ToString());
-            string dropKeyString = PlayerPrefs.GetString("DropKey", KeyCode.S.ToString());
+            string jumpKeyString = PlayerPrefs.GetString(GameConstants.JUMP_KEY, KeyCode.Space.ToString());
+            string dropKeyString = PlayerPrefs.GetString(GameConstants.DROP_KEY, KeyCode.S.ToString());
 
             if (System.Enum.TryParse(jumpKeyString, out KeyCode loadedJumpKey))
                 jumpKey = loadedJumpKey;
@@ -130,8 +129,8 @@ namespace Managers
 
         private void SaveInputSettings()
         {
-            PlayerPrefs.SetString("JumpKey", jumpKey.ToString());
-            PlayerPrefs.SetString("DropKey", dropKey.ToString());
+            PlayerPrefs.SetString(GameConstants.JUMP_KEY, jumpKey.ToString());
+            PlayerPrefs.SetString(GameConstants.DROP_KEY, dropKey.ToString());
             PlayerPrefs.Save();
         }
 

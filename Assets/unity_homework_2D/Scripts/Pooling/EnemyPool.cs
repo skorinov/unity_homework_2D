@@ -59,25 +59,6 @@ namespace Pooling
             }
         }
 
-        public void ReturnEnemiesOutsideRange(float minY, float maxY)
-        {
-            for (int i = _activeEnemies.Count - 1; i >= 0; i--)
-            {
-                if (!_activeEnemies[i]) 
-                {
-                    _activeEnemies.RemoveAt(i);
-                    continue;
-                }
-                
-                float enemyY = _activeEnemies[i].transform.position.y;
-                
-                if (enemyY < minY || enemyY > maxY)
-                {
-                    ReturnEnemy(_activeEnemies[i]);
-                }
-            }
-        }
-
         public void ClearAllEnemies()
         {
             var enemiesToReturn = new List<BaseEnemy>(_activeEnemies);

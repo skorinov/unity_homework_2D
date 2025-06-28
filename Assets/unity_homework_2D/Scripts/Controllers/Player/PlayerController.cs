@@ -84,7 +84,7 @@ namespace Controllers.Player
             float velocityDifference = targetVelocity - _rb.linearVelocity.x;
 
             // Apply acceleration or friction
-            if (Mathf.Abs(_horizontalInput) > 0.1f)
+            if (Mathf.Abs(_horizontalInput) > GameConstants.INPUT_DEADZONE_THRESHOLD)
             {
                 // Player is giving input - accelerate toward target velocity
                 float force = velocityDifference * currentAcceleration;
@@ -108,7 +108,7 @@ namespace Controllers.Player
             if (platform)
             {
                 DisablePlatformCollision(platform);
-                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, -5f);
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, GameConstants.DROP_THROUGH_VELOCITY);
             }
         }
 
@@ -199,11 +199,6 @@ namespace Controllers.Player
                 inputManager.OnJumpInput -= TryJump;
                 inputManager.OnDropInput -= TryDropThrough;
             }
-        }
-
-        public void ForceEnable()
-        {
-            gameObject.SetActive(true);
         }
     }
 }

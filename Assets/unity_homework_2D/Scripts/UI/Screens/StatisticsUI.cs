@@ -9,18 +9,16 @@ namespace UI.Screens
 {
     public class StatisticsUI : BaseUI
     {
-        [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI maxHeightText;
-        [SerializeField] private TextMeshProUGUI totalCoinsText;
+        [SerializeField] private TextMeshProUGUI bestCoinsText;
         [SerializeField] private Button backButton;
         [SerializeField] private string maxHeightFormat = "Best Height: {0}m";
-        [SerializeField] private string totalCoinsFormat = "Total Coins: {0}";
+        [SerializeField] private string bestCoinsFormat = "Best Coins: {0}";
         
         private MenuNavigationController _navigation;
 
-        protected override void Awake()
+        protected void Awake()
         {
-            base.Awake();
             _navigation = GetComponent<MenuNavigationController>();
         }
         
@@ -50,8 +48,8 @@ namespace UI.Screens
             if (maxHeightText)
                 maxHeightText.text = string.Format(maxHeightFormat, Mathf.RoundToInt(gameData.maxHeight));
                 
-            if (totalCoinsText)
-                totalCoinsText.text = string.Format(totalCoinsFormat, gameData.totalCoins);
+            if (bestCoinsText)
+                bestCoinsText.text = string.Format(bestCoinsFormat, gameData.maxCoinsPerSession);
         }
 
         public MenuNavigationController GetNavigation() => _navigation;

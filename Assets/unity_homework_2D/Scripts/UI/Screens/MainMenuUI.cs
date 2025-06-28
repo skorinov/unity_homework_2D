@@ -1,3 +1,4 @@
+using Constants;
 using Managers;
 using TMPro;
 using UI.Navigation;
@@ -8,8 +9,6 @@ namespace UI.Screens
 {
     public class MainMenuUI : BaseUI
     {
-        [SerializeField] private TextMeshProUGUI titleText;
-        [SerializeField] private Image logoImage;
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button startButton;
         [SerializeField] private Button statisticsButton;
@@ -18,9 +17,8 @@ namespace UI.Screens
 
         private MenuNavigationController _navigation;
 
-        protected override void Awake()
+        protected void Awake()
         {
-            base.Awake();
             _navigation = GetComponent<MenuNavigationController>();
         }
 
@@ -92,7 +90,8 @@ namespace UI.Screens
             {
                 var startButtonText = startButton.GetComponentInChildren<TextMeshProUGUI>();
                 if (startButtonText)
-                    startButtonText.text = gameEverStarted ? "New Game" : "Start Game";
+                    startButtonText.text = gameEverStarted ? GameConstants.NEW_GAME_TEXT : 
+                        GameConstants.START_GAME_TEXT;;
             }
         }
 

@@ -1,6 +1,7 @@
 using Controllers.Player;
 using Pooling;
 using System.Collections.Generic;
+using Managers;
 using UnityEngine;
 
 namespace Controllers.Platform.Actions
@@ -117,6 +118,7 @@ namespace Controllers.Platform.Actions
 
         private void BreakPlatform(BasePlatform platform, ref FragileState state)
         {
+            AudioManager.Instance?.PlayPlatformBreakSound();
             var spriteRenderer = platform.GetComponent<SpriteRenderer>();
             var boxCollider = platform.GetComponent<BoxCollider2D>();
 
