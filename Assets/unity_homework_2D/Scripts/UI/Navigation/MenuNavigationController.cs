@@ -7,9 +7,10 @@ namespace UI.Navigation
 {
     public class MenuNavigationController : MonoBehaviour
     {
-        [SerializeField] private List<Button> _buttons = new();
+        [SerializeField] private List<Selectable> _selectables = new();
         [SerializeField] private Color normalColor = Color.white;
         [SerializeField] private Color selectedColor = new Color(1f, 1f, 0.5f, 1f);
+        [SerializeField] private float sliderStep = 5f;
         
         private int _currentIndex = 0;
         private bool _isActive = false;
@@ -18,21 +19,57 @@ namespace UI.Navigation
         public System.Action<int> OnNavigateDown;
         public System.Action OnConfirm;
 
-        public List<Button> buttons => _buttons;
+        public List<Selectable> selectables => _selectables;
         
         private void Awake()
         {
-            if (_buttons.Count == 0)
-                _buttons.AddRange(GetComponentsInChildren<Button>());
+            if (_selectables.Count == 0)
+                _selectables.AddRange(GetComponentsInChildren<Selectable>());
+        }
+        
+        private void Update()
+        {
+            if (!_isActive) return;
+            
+            HandleHorizontalInput();
+        }
+        
+        private void HandleHorizontalInput()
+        {
+            if (_selectables.Count == 0 || !IsSelectableValid(_currentIndex)) return;
+            
+            var currentSelectable = _selectables[_currentIndex];
+            
+            // Handle slider input
+            if (currentSelectable is Slider slider)
+            {
+                float horizontalInput = Input.GetAxis("Horizontal");
+                
+                if (Mathf.Abs(horizontalInput) > 0.1f)
+                {
+                    float newValue = slider.value + horizontalInput * sliderStep * Time.unscaledDeltaTime;
+                    slider.value = Mathf.Clamp(newValue, slider.minValue, slider.maxValue);
+                }
+                
+                // Discrete step input
+                if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+                {
+                    slider.value = Mathf.Max(slider.minValue, slider.value - sliderStep);
+                }
+                else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+                {
+                    slider.value = Mathf.Min(slider.maxValue, slider.value + sliderStep);
+                }
+            }
         }
         
         public void Initialize()
         {
-            if (_buttons.Count == 0) return;
+            if (_selectables.Count == 0) return;
             
-            _currentIndex = FindFirstValidButtonIndex();
+            _currentIndex = FindFirstValidSelectableIndex();
             _isActive = true;
-            UpdateButtonStates();
+            UpdateSelectableStates();
         }
         
         public void SetActive(bool active)
@@ -44,127 +81,173 @@ namespace UI.Navigation
         
         public void NavigateUp()
         {
-            if (!_isActive || _buttons.Count == 0) return;
+            if (!_isActive || _selectables.Count == 0) return;
             
             int startIndex = _currentIndex;
             do
             {
-                _currentIndex = (_currentIndex - 1 + _buttons.Count) % _buttons.Count;
+                _currentIndex = (_currentIndex - 1 + _selectables.Count) % _selectables.Count;
             }
-            while (!IsButtonValid(_currentIndex) && _currentIndex != startIndex);
+            while (!IsSelectableValid(_currentIndex) && _currentIndex != startIndex);
             
-            UpdateButtonStates();
+            UpdateSelectableStates();
             Managers.AudioManager.Instance?.PlayButtonHover();
             OnNavigateUp?.Invoke(_currentIndex);
         }
         
         public void NavigateDown()
         {
-            if (!_isActive || _buttons.Count == 0) return;
+            if (!_isActive || _selectables.Count == 0) return;
             
             int startIndex = _currentIndex;
             do
             {
-                _currentIndex = (_currentIndex + 1) % _buttons.Count;
+                _currentIndex = (_currentIndex + 1) % _selectables.Count;
             }
-            while (!IsButtonValid(_currentIndex) && _currentIndex != startIndex);
+            while (!IsSelectableValid(_currentIndex) && _currentIndex != startIndex);
             
-            UpdateButtonStates();
+            UpdateSelectableStates();
             Managers.AudioManager.Instance?.PlayButtonHover();
             OnNavigateDown?.Invoke(_currentIndex);
         }
         
         public void Confirm()
         {
-            if (!_isActive || _buttons.Count == 0 || !IsButtonValid(_currentIndex)) 
+            if (!_isActive || _selectables.Count == 0 || !IsSelectableValid(_currentIndex)) 
                 return;
                 
-            var button = _buttons[_currentIndex];
-            Managers.AudioManager.Instance?.PlayButtonClick();
-            button.onClick.Invoke();
-            OnConfirm?.Invoke();
-        }
-        
-        private bool IsButtonValid(int index)
-        {
-            if (index < 0 || index >= _buttons.Count || !_buttons[index]) return false;
+            var selectable = _selectables[_currentIndex];
             
-            var button = _buttons[index];
-            return button.gameObject.activeInHierarchy && button.interactable;
-        }
-        
-        private int FindFirstValidButtonIndex()
-        {
-            for (int i = 0; i < _buttons.Count; i++)
+            // Handle button clicks
+            if (selectable is Button button)
             {
-                if (IsButtonValid(i)) return i;
+                Managers.AudioManager.Instance?.PlayButtonClick();
+                button.onClick.Invoke();
+                OnConfirm?.Invoke();
             }
-            return 0; // Fallback to first button if none are valid
+            // Handle toggle switches
+            else if (selectable is Toggle toggle)
+            {
+                Managers.AudioManager.Instance?.PlayButtonClick();
+                toggle.isOn = !toggle.isOn;
+                OnConfirm?.Invoke();
+            }
+            // Handle dropdown opening
+            else if (selectable is Dropdown dropdown)
+            {
+                Managers.AudioManager.Instance?.PlayButtonClick();
+                dropdown.Show();
+                OnConfirm?.Invoke();
+            }
         }
         
-        private void UpdateButtonStates()
+        private bool IsSelectableValid(int index)
         {
-            for (int i = 0; i < _buttons.Count; i++)
+            if (index < 0 || index >= _selectables.Count || !_selectables[index]) return false;
+            
+            var selectable = _selectables[index];
+            return selectable.gameObject.activeInHierarchy && selectable.interactable;
+        }
+        
+        private int FindFirstValidSelectableIndex()
+        {
+            for (int i = 0; i < _selectables.Count; i++)
             {
-                if (!_buttons[i]) continue;
+                if (IsSelectableValid(i)) return i;
+            }
+            return 0;
+        }
+        
+        private void UpdateSelectableStates()
+        {
+            for (int i = 0; i < _selectables.Count; i++)
+            {
+                if (!_selectables[i]) continue;
                 
                 bool isSelected = i == _currentIndex;
                 
                 // Update ButtonHoverEffects if present
-                var hoverEffect = _buttons[i].GetComponent<ButtonHoverEffects>();
+                var hoverEffect = _selectables[i].GetComponent<ButtonHoverEffects>();
                 if (hoverEffect)
                 {
                     hoverEffect.SetKeyboardSelected(isSelected);
                 }
                 else
                 {
-                    // Fallback to direct color change
-                    var targetGraphic = _buttons[i].targetGraphic;
-                    if (targetGraphic)
-                    {
-                        targetGraphic.color = isSelected ? selectedColor : normalColor;
-                    }
+                    // Fallback to direct color change for different UI elements
+                    SetSelectableColor(_selectables[i], isSelected);
                 }
+            }
+        }
+        
+        private void SetSelectableColor(Selectable selectable, bool isSelected)
+        {
+            Color targetColor = isSelected ? selectedColor : normalColor;
+            
+            if (selectable is Button button && button.targetGraphic)
+            {
+                button.targetGraphic.color = targetColor;
+            }
+            else if (selectable is Slider slider)
+            {
+                // Highlight slider handle
+                var handle = slider.handleRect?.GetComponent<Image>();
+                if (handle) handle.color = targetColor;
+            }
+            else if (selectable is Toggle toggle && toggle.targetGraphic)
+            {
+                toggle.targetGraphic.color = targetColor;
+            }
+            else if (selectable is Dropdown dropdown && dropdown.targetGraphic)
+            {
+                dropdown.targetGraphic.color = targetColor;
             }
         }
         
         public void SetCurrentIndex(int index)
         {
-            if (index >= 0 && index < _buttons.Count && IsButtonValid(index))
+            if (index >= 0 && index < _selectables.Count && IsSelectableValid(index))
             {
                 _currentIndex = index;
-                UpdateButtonStates();
+                UpdateSelectableStates();
             }
         }
         
         private void ClearSelection()
         {
-            foreach (var button in _buttons)
+            foreach (var selectable in _selectables)
             {
-                if (!button) continue;
+                if (!selectable) continue;
                 
-                var hoverEffect = button.GetComponent<ButtonHoverEffects>();
+                var hoverEffect = selectable.GetComponent<ButtonHoverEffects>();
                 if (hoverEffect)
                 {
                     hoverEffect.SetKeyboardSelected(false);
                 }
-                else if (button.targetGraphic)
+                else
                 {
-                    button.targetGraphic.color = normalColor;
+                    SetSelectableColor(selectable, false);
                 }
             }
         }
         
-        public void AddButton(Button button)
+        public void AddSelectable(Selectable selectable)
         {
-            if (button && !_buttons.Contains(button))
-                _buttons.Add(button);
+            if (selectable && !_selectables.Contains(selectable))
+                _selectables.Add(selectable);
         }
         
-        public void RemoveButton(Button button)
+        public void RemoveSelectable(Selectable selectable)
         {
-            if (_buttons.Contains(button))
-                _buttons.Remove(button);
+            if (_selectables.Contains(selectable))
+                _selectables.Remove(selectable);
+        }
+        
+        // Helper method to refresh selectables list
+        public void RefreshSelectables()
+        {
+            _selectables.Clear();
+            _selectables.AddRange(GetComponentsInChildren<Selectable>());
         }
     }
 }

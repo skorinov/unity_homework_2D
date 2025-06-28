@@ -16,5 +16,5 @@ MonoBehaviour:
   description: 
   actions:
   - {fileID: 11400000, guid: 41fb7d477d9c43049923b21c21d8607b, type: 2}
-  - {fileID: 11400000, guid: fe51e4d3d71930747b3ae9d827472750, type: 2}
-  overrideChance: 30
+  - {fileID: 11400000, guid: f49457cb1f35ee143977388dd35a3e63, type: 2}
+  overrideChance: -1

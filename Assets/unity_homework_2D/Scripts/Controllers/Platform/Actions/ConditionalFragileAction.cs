@@ -8,11 +8,11 @@ namespace Controllers.Platform.Actions
     [CreateAssetMenu(fileName = "ConditionalFragileAction", menuName = "Platform Actions/Conditional Fragile Action")]
     public class ConditionalFragileAction : PlatformAction
     {
-        [SerializeField] private float neighborCheckRadius = 3f;
+        [SerializeField] private float neighborCheckRadius = 10f;
         [SerializeField] private float respawnDelay = 3f;
-        [SerializeField, Range(0f, 100f)] private float fragileChance = 30f;
+        [SerializeField, Range(0f, 100f)] private float fragileChance = 20f;
         [SerializeField] private float sameHeightTolerance = 1f;
-        [SerializeField] private int landingsToBreak = 1;
+        [SerializeField] private int landingsToBreak = 2;
 
         private readonly Dictionary<BasePlatform, FragileState> _fragileStates = new();
         

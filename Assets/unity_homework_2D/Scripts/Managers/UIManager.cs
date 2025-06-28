@@ -11,7 +11,8 @@ namespace Managers
         MainMenu,
         InGame,
         GameOver,
-        Statistics
+        Statistics,
+        Settings
     }
 
     public class UIManager : Singleton<UIManager>
@@ -20,9 +21,11 @@ namespace Managers
         [SerializeField] private GameUI gameUI;
         [SerializeField] private GameOverUI gameOverUI;
         [SerializeField] private StatisticsUI statisticsUI;
+        [SerializeField] private SettingsUI settingsUI;
         [SerializeField] private InputManager inputManager;
 
         private UIState _currentState = UIState.None;
+        private UIState _previousState = UIState.None;
         private bool _hasInitialized;
         private MenuNavigationController _currentNavigation;
 
@@ -62,6 +65,7 @@ namespace Managers
                     ReturnToMainMenu();
                     break;
                 case UIState.Statistics:
+                case UIState.Settings:
                     SetState(UIState.MainMenu);
                     break;
             }
@@ -75,6 +79,7 @@ namespace Managers
         {
             if (_currentState == newState) return;
 
+            _previousState = _currentState;
             _currentState = newState;
 
             switch (_currentState)
@@ -90,6 +95,9 @@ namespace Managers
                     break;
                 case UIState.Statistics:
                     ShowStatisticsInternal();
+                    break;
+                case UIState.Settings:
+                    ShowSettingsInternal();
                     break;
             }
         }
@@ -157,6 +165,22 @@ namespace Managers
             inputManager?.EnableUIInput();
         }
 
+        private void ShowSettingsInternal()
+        {
+            HideAllScreens();
+
+            if (settingsUI)
+            {
+                settingsUI.gameObject.SetActive(true);
+                settingsUI.Show();
+                ClearButtonStates(settingsUI.gameObject);
+                _currentNavigation = settingsUI.GetNavigation();
+            }
+
+            AudioManager.Instance?.PlayMenuMusic();
+            inputManager?.EnableUIInput();
+        }
+
         private void ClearButtonStates(GameObject parent)
         {
             var buttons = parent.GetComponentsInChildren<UnityEngine.UI.Button>(true);
@@ -196,6 +220,12 @@ namespace Managers
                 statisticsUI.Hide();
                 statisticsUI.gameObject.SetActive(false);
             }
+
+            if (settingsUI)
+            {
+                settingsUI.Hide();
+                settingsUI.gameObject.SetActive(false);
+            }
         }
 
         public void StartGame()
@@ -226,12 +256,16 @@ namespace Managers
         }
 
         public void ShowStatistics() => SetState(UIState.Statistics);
+        public void ShowSettings() => SetState(UIState.Settings);
 
         public void ReturnToMainMenu()
         {
             if (GameManager.Instance?.IsCameraTransitioning == true) return;
             SetState(UIState.MainMenu);
-            GameManager.Instance?.PauseGame();
+            
+            // Only pause game if coming from in-game
+            if (_previousState == UIState.InGame)
+                GameManager.Instance?.PauseGame();
         }
 
         public void QuitGame()

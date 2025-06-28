@@ -153,7 +153,7 @@ namespace Controllers.Platform
             }
         }
 
-        public void DisableCollision() => Invoke(nameof(ResetCollision), 0.2f);
+        public void DisableCollision() => Invoke(nameof(ResetCollision), GameConstants.DROP_THROUGH_COLLISION_DELAY);
         private void ResetCollision()
         {
             if (_boxCollider) _boxCollider.enabled = true;
@@ -208,13 +208,6 @@ namespace Controllers.Platform
         private bool IsPlayerLanding(Collision2D collision) =>
             collision.gameObject.CompareTag(GameConstants.PLAYER_TAG) && 
             collision.rigidbody.linearVelocity.y <= GameConstants.LANDING_VELOCITY_THRESHOLD;
-
-        public void BreakPlatform()
-        {
-            if (_spriteRenderer) _spriteRenderer.color = Color.clear;
-            if (_boxCollider) _boxCollider.enabled = false;
-            PlatformPool.Instance?.ReturnPlatform(this);
-        }
 
         public void ApplyPreset(PlatformPreset preset)
         {

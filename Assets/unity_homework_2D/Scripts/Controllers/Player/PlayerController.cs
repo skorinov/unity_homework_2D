@@ -24,6 +24,7 @@ namespace Controllers.Player
 
         private Rigidbody2D _rb;
         private PlayerAnimationController _animationController;
+        private PlayerDamageSystem _damageSystem;
 
         private bool _isGrounded;
         private bool _hasDoubleJumped;
@@ -59,6 +60,7 @@ namespace Controllers.Player
         {
             _rb = GetComponent<Rigidbody2D>();
             _animationController = GetComponent<PlayerAnimationController>();
+            _damageSystem = GetComponent<PlayerDamageSystem>();
         }
 
         private void SubscribeToInput()
@@ -174,7 +176,15 @@ namespace Controllers.Player
 
         public void SetHorizontalSpeedMultiplier(float multiplier) => _moveSpeedMultiplier = multiplier;
         public void SetJumpForceMultiplier(float multiplier) => _jumpForceMultiplier = multiplier;
-        public void ResetMultipliers() => _moveSpeedMultiplier = _jumpForceMultiplier = 1f;
+        
+        public void ResetMultipliers() 
+        {
+            _moveSpeedMultiplier = _jumpForceMultiplier = 1f;
+            
+            // Reset damage system if it exists
+            if (_damageSystem)
+                _damageSystem.ResetDamageSystem();
+        }
 
         protected override void OnSingletonDestroy()
         {

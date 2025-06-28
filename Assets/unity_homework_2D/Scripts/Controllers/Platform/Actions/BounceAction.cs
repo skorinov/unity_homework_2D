@@ -7,10 +7,10 @@ namespace Controllers.Platform.Actions
     [CreateAssetMenu(fileName = "BounceAction", menuName = "Platform Actions/Chance Bounce Action")]
     public class BounceAction : PlatformAction
     {
-        [SerializeField, Range(0f, 100f)] private float bounceChance = 50f;
-        [SerializeField] private float jumpForceMultiplier = 1.8f;
-        [SerializeField] private float bounceScale = 1.2f;
-        [SerializeField] private float bounceDuration = 0.3f;
+        [SerializeField, Range(0f, 100f)] private float bounceChance = 30f;
+        [SerializeField] private float jumpForceMultiplier = 1.5f;
+        [SerializeField] private float bounceScale = 1.1f;
+        [SerializeField] private float bounceDuration = 0.2f;
 
         private readonly Dictionary<BasePlatform, BounceState> _bounceStates = new();
         

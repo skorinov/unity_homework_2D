@@ -61,29 +61,13 @@ namespace Controllers.Platform.Actions
                 _spawnedCoins[platform] = coin;
             }
         }
-
-        private void OnDestroy() 
+        private void OnDestroy() => ClearAllCoins();
+        private void OnDisable() => ClearAllCoins();
+        
+        private void ClearAllCoins()
         {
             if (_spawnedCoins == null) return;
-            
-            // Return all coins managed by this action
-            foreach (var coin in _spawnedCoins.Values)
-            {
-                if (coin && coin.gameObject.activeInHierarchy)
-                {
-                    // Detach from platform before returning to pool
-                    coin.transform.SetParent(null);
-                    CoinPool.Instance?.ReturnCoin(coin);
-                }
-            }
-            _spawnedCoins.Clear();
-        }
-
-        private void OnDisable()
-        {
-            if (_spawnedCoins == null) return;
-            
-            // Also clear when ScriptableObject is disabled
+    
             foreach (var coin in _spawnedCoins.Values)
             {
                 if (coin && coin.gameObject.activeInHierarchy)

@@ -89,8 +89,7 @@ namespace Managers
             if (!player || _isCameraTransitioning) return;
             
             // Clear only for NEW game
-            PlatformPool.Instance?.ClearAllPlatforms();
-            CoinPool.Instance?.ClearAllCoins();
+            ClearAllGameObjects();
             // Always reset game state for new game
             _hasGameEverStarted = true;
             StartCoroutine(TransitionToGame(true)); // Force new game
@@ -113,8 +112,7 @@ namespace Managers
         {
             if (!player || _isCameraTransitioning) return;
             
-            PlatformPool.Instance?.ClearAllPlatforms();
-            CoinPool.Instance?.ClearAllCoins();
+            ClearAllGameObjects();
 
             _isDead = false;
             ResetGameSystems();
@@ -293,10 +291,16 @@ namespace Managers
             }
         }
 
-        public void ClearPlatforms()
+        private void ClearAllGameObjects()
         {
             PlatformPool.Instance?.ClearAllPlatforms();
             CoinPool.Instance?.ClearAllCoins();
+            EnemyPool.Instance?.ClearAllEnemies();
+        }
+
+        public void ClearPlatforms()
+        {
+            ClearAllGameObjects();
         }
 
         public float GetHighestPlayerY() => _highestPlayerY;

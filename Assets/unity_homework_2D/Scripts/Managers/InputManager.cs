@@ -22,6 +22,22 @@ namespace Managers
         private bool _gameInputEnabled = false;
         private bool _uiInputEnabled = true;
 
+        // Static instance for easy access
+        public static InputManager Instance { get; private set; }
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+                LoadInputSettings();
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
+
         private void Update()
         {
             HandleEscapeInput();
@@ -84,9 +100,50 @@ namespace Managers
             _uiInputEnabled = false;
         }
 
+        // Key binding methods - NEW
+        public KeyCode GetJumpKey() => jumpKey;
+        public KeyCode GetDropKey() => dropKey;
+
+        public void SetJumpKey(KeyCode newKey)
+        {
+            jumpKey = newKey;
+            SaveInputSettings();
+        }
+
+        public void SetDropKey(KeyCode newKey)
+        {
+            dropKey = newKey;
+            SaveInputSettings();
+        }
+
+        private void LoadInputSettings()
+        {
+            string jumpKeyString = PlayerPrefs.GetString("JumpKey", KeyCode.Space.ToString());
+            string dropKeyString = PlayerPrefs.GetString("DropKey", KeyCode.S.ToString());
+
+            if (System.Enum.TryParse(jumpKeyString, out KeyCode loadedJumpKey))
+                jumpKey = loadedJumpKey;
+
+            if (System.Enum.TryParse(dropKeyString, out KeyCode loadedDropKey))
+                dropKey = loadedDropKey;
+        }
+
+        private void SaveInputSettings()
+        {
+            PlayerPrefs.SetString("JumpKey", jumpKey.ToString());
+            PlayerPrefs.SetString("DropKey", dropKey.ToString());
+            PlayerPrefs.Save();
+        }
+
         private void Start()
         {
             EnableUIInput();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+                Instance = null;
         }
     }
 }

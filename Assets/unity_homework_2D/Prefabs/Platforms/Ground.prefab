@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 914949006007633897}
   - component: {fileID: 7191860259680459252}
   - component: {fileID: 5530682594236016954}
+  - component: {fileID: -4387039911975572595}
   m_Layer: 6
   m_Name: Ground
   m_TagString: Platform
@@ -80,14 +81,14 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 726796683
-  m_SortingLayer: 3
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: ab138010cd3f0994782893e4a3d09519, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
-  m_Size: {x: 18.5, y: 1}
+  m_Size: {x: 20, y: 1}
   m_AdaptiveModeThreshold: 1
   m_SpriteTileMode: 1
   m_WasSpriteAssigned: 1
@@ -132,13 +133,29 @@ BoxCollider2D:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
     oldSize: {x: 1.28, y: 1.28}
-    newSize: {x: 18.5, y: 1}
+    newSize: {x: 20, y: 1}
     adaptiveTilingThreshold: 1
     drawMode: 1
     adaptiveTiling: 1
   m_AutoTiling: 0
-  m_Size: {x: 18.5, y: 1}
+  m_Size: {x: 20, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &-4387039911975572595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3856646497846747698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6758a82b309f44d1a86f15e358a9623f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetCamera: {fileID: 0}
+  widthPadding: 1
+  adaptOnStart: 1
+  adaptOnScreenChange: 1
 --- !u!1001 &711314761927378059
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -149,7 +166,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1026152067291589471, guid: 48bff0a9dc7e6364888bfcd84304e7cf, type: 3}
       propertyPath: m_SortingLayer
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 1026152067291589471, guid: 48bff0a9dc7e6364888bfcd84304e7cf, type: 3}
       propertyPath: m_SortingOrder
@@ -223,7 +240,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1922002564614094806, guid: f69d0e6cf680f3a4987a52a51125ccf6, type: 3}
       propertyPath: m_SortingLayer
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 1922002564614094806, guid: f69d0e6cf680f3a4987a52a51125ccf6, type: 3}
       propertyPath: m_SortingOrder
@@ -341,7 +358,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7671360321314543335, guid: 2f735699ac5680a41b18ec885214c54d, type: 3}
       propertyPath: m_SortingLayer
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7671360321314543335, guid: 2f735699ac5680a41b18ec885214c54d, type: 3}
       propertyPath: m_SortingOrder
@@ -431,7 +448,7 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: fbeacbc93ba0d7648a37ddb4b564b4b6, type: 3}
     - target: {fileID: 753254197241937900, guid: a20f8b7a314850743b74833d60eb3725, type: 3}
       propertyPath: m_SortingLayer
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 753254197241937900, guid: a20f8b7a314850743b74833d60eb3725, type: 3}
       propertyPath: m_SortingOrder
@@ -473,7 +490,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 341997217619164420, guid: f5d8a31efd354a045ac05022d01266b2, type: 3}
       propertyPath: m_SortingLayer
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 341997217619164420, guid: f5d8a31efd354a045ac05022d01266b2, type: 3}
       propertyPath: m_SortingOrder

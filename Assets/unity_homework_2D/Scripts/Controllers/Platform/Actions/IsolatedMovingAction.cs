@@ -52,7 +52,7 @@ namespace Controllers.Platform.Actions
                 data.wasMoving = false;
                 _movingData[platform] = data;
             }
-            else if (shouldMove && data.wasMoving && data.rigidbody)
+            else if (shouldMove && data.rigidbody)
             {
                 UpdateMovement(platform, data);
             }
@@ -76,7 +76,7 @@ namespace Controllers.Platform.Actions
                 if (otherPlatform == platform) continue;
                 
                 float yDifference = Mathf.Abs(platformPos.y - otherPlatform.transform.position.y);
-                if (yDifference < 0.5f) // Same horizontal level
+                if (yDifference < GameConstants.SAME_HORIZONTAL_LEVEL_TOLERANCE) // Same horizontal level
                 {
                     return false;
                 }
@@ -100,7 +100,7 @@ namespace Controllers.Platform.Actions
             
             data.leftBound = bounds.min;
             data.rightBound = bounds.max;
-            data.direction = startMovingRight ? 1 : -1;
+            data.direction = startMovingRight ? GameConstants.DIRECTION_RIGHT : GameConstants.DIRECTION_LEFT;
             data.rigidbody = rb;
             
             _movingData[platform] = data;
@@ -126,12 +126,12 @@ namespace Controllers.Platform.Actions
 
             if (targetX >= data.rightBound)
             {
-                data.direction = -1;
+                data.direction = GameConstants.DIRECTION_LEFT;
                 targetX = data.rightBound;
             }
             else if (targetX <= data.leftBound)
             {
-                data.direction = 1;
+                data.direction = GameConstants.DIRECTION_RIGHT;
                 targetX = data.leftBound;
             }
 
@@ -144,15 +144,14 @@ namespace Controllers.Platform.Actions
 
         public override void OnReset(BasePlatform platform)
         {
-            if (_movingData.TryGetValue(platform, out var data))
+            if (!_movingData.TryGetValue(platform, out var data)) return;
+
+            if (data.wasMoving)
             {
-                if (data.wasMoving)
-                {
-                    StopMoving(platform);
-                }
-                // Reset data but keep the entry for reuse
-                _movingData[platform] = new MovingData { wasMoving = false };
+                StopMoving(platform);
             }
+            // Reset data but keep the entry for reuse
+            _movingData[platform] = new MovingData { wasMoving = false };
         }
 
         private void SetupRigidbody(Rigidbody2D rb)
@@ -168,22 +167,24 @@ namespace Controllers.Platform.Actions
         {
             float screenHalfWidth = _mainCamera.orthographicSize * _mainCamera.aspect;
             var boxCollider = platform.GetComponent<BoxCollider2D>();
-            float platformHalfWidth = boxCollider ? boxCollider.size.x * platform.transform.localScale.x * 0.5f : 0.5f;
-            
+            float platformHalfWidth = boxCollider ? 
+                boxCollider.size.x * platform.transform.localScale.x * GameConstants.HALF_WIDTH_MULTIPLIER : 
+                GameConstants.DEFAULT_PLATFORM_HALF_WIDTH_FALLBACK;
+    
             float currentX = platform.transform.position.x;
-            float halfRange = moveRange * 0.5f;
-            
+            float halfRange = moveRange * GameConstants.HALF_WIDTH_MULTIPLIER;
+    
             float screenLeft = -screenHalfWidth + GameConstants.SCREEN_MARGIN + platformHalfWidth;
             float screenRight = screenHalfWidth - GameConstants.SCREEN_MARGIN - platformHalfWidth;
-            
+    
             float leftBound = Mathf.Max(currentX - halfRange, screenLeft);
             float rightBound = Mathf.Min(currentX + halfRange, screenRight);
-            
-            if (rightBound - leftBound < 1f)
+    
+            if (rightBound - leftBound < GameConstants.MIN_MOVEMENT_RANGE)
             {
-                float center = (leftBound + rightBound) * 0.5f;
-                leftBound = center - 0.5f;
-                rightBound = center + 0.5f;
+                float center = (leftBound + rightBound) * GameConstants.HALF_WIDTH_MULTIPLIER;
+                leftBound = center - GameConstants.MIN_MOVEMENT_HALF_RANGE;
+                rightBound = center + GameConstants.MIN_MOVEMENT_HALF_RANGE;
             }
 
             return (leftBound, rightBound);
@@ -191,7 +192,7 @@ namespace Controllers.Platform.Actions
 
         private void OnDestroy() => _movingData.Clear();
         
-        public override void OnPlayerStaying(Controllers.Player.PlayerController player, BasePlatform platform)
+        public override void OnPlayerStaying(Player.PlayerController player, BasePlatform platform)
         {
             if (_movingData.TryGetValue(platform, out var data) && data.wasMoving && data.rigidbody)
             {

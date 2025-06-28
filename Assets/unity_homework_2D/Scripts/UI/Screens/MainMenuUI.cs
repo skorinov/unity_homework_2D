@@ -13,6 +13,7 @@ namespace UI.Screens
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button startButton;
         [SerializeField] private Button statisticsButton;
+        [SerializeField] private Button settingsButton;
         [SerializeField] private Button quitButton;
 
         private MenuNavigationController _navigation;
@@ -28,6 +29,7 @@ namespace UI.Screens
             resumeButton?.onClick.AddListener(OnResumeClicked);
             startButton?.onClick.AddListener(OnStartClicked);
             statisticsButton?.onClick.AddListener(OnStatisticsClicked);
+            settingsButton?.onClick.AddListener(OnSettingsClicked);
             quitButton?.onClick.AddListener(OnQuitClicked);
         }
 
@@ -60,6 +62,12 @@ namespace UI.Screens
         {
             if (CanInteract())
                 UIManager.Instance?.ShowStatistics();
+        }
+
+        private void OnSettingsClicked()
+        {
+            if (CanInteract())
+                UIManager.Instance?.ShowSettings();
         }
 
         private void OnQuitClicked()

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace UI.Effects
 {
-    [RequireComponent(typeof(Button))]
+    [RequireComponent(typeof(Selectable))]
     public class ButtonHoverEffects : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         [SerializeField] private Color normalColor = Color.white;
@@ -19,8 +19,8 @@ namespace UI.Effects
         [SerializeField] private float pressedScale = 0.95f;
         [SerializeField] private float scaleTransitionSpeed = 10f;
         
-        private Button _button;
-        private Image _buttonImage;
+        private Selectable _selectable;
+        private Image _targetImage;
         private Vector3 _originalScale;
         private Color _targetColor;
         private float _targetScale;
@@ -31,18 +31,51 @@ namespace UI.Effects
         
         private void Awake()
         {
-            _button = GetComponent<Button>();
-            _buttonImage = GetComponent<Image>();
-            _originalScale = transform.localScale;
+            _selectable = GetComponent<Selectable>();
             _navigation = GetComponentInParent<MenuNavigationController>();
+            _originalScale = transform.localScale;
             
-            if (_buttonImage)
+            // Find the appropriate image to modify based on selectable type
+            FindTargetImage();
+            
+            if (_targetImage)
             {
-                normalColor = _buttonImage.color;
+                normalColor = _targetImage.color;
                 _targetColor = normalColor;
             }
             
             _targetScale = 1f;
+        }
+        
+        private void FindTargetImage()
+        {
+            if (_selectable is Button button)
+            {
+                _targetImage = button.targetGraphic as Image ?? GetComponent<Image>();
+            }
+            else if (_selectable is Slider slider)
+            {
+                // For sliders, target the handle
+                _targetImage = slider.handleRect?.GetComponent<Image>();
+                if (!_targetImage)
+                {
+                    // Fallback to fill area or background
+                    _targetImage = slider.fillRect?.GetComponent<Image>() ?? GetComponent<Image>();
+                }
+            }
+            else if (_selectable is Toggle toggle)
+            {
+                _targetImage = toggle.targetGraphic as Image ?? GetComponent<Image>();
+            }
+            else if (_selectable is Dropdown dropdown)
+            {
+                _targetImage = dropdown.targetGraphic as Image ?? GetComponent<Image>();
+            }
+            else
+            {
+                // Generic fallback
+                _targetImage = GetComponent<Image>();
+            }
         }
         
         private void Update()
@@ -54,7 +87,7 @@ namespace UI.Effects
         
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (!_button.interactable) return;
+            if (!_selectable.interactable) return;
             
             _isHovered = true;
             UpdateNavigationSelection();
@@ -74,10 +107,18 @@ namespace UI.Effects
         
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (!_button.interactable) return;
+            if (!_selectable.interactable) return;
             
             _isPressed = true;
             SetPressedState();
+            
+            // Different audio for different selectable types
+            if (_selectable is Slider)
+            {
+                // Don't play click sound for sliders on mouse down
+                return;
+            }
+            
             AudioManager.Instance?.PlayButtonClick();
         }
         
@@ -133,10 +174,12 @@ namespace UI.Effects
         {
             if (!_navigation) return;
             
-            var navigationButtons = _navigation.buttons;
-            for (int i = 0; i < navigationButtons.Count; i++)
+            var navigationSelectables = _navigation.selectables;
+            for (int i = 0; i < navigationSelectables.Count; i++)
             {
-                if (navigationButtons[i] == _button && _button.gameObject.activeInHierarchy && _button.interactable)
+                if (navigationSelectables[i] == _selectable && 
+                    _selectable.gameObject.activeInHierarchy && 
+                    _selectable.interactable)
                 {
                     _navigation.SetCurrentIndex(i);
                     break;
@@ -146,9 +189,9 @@ namespace UI.Effects
         
         private void UpdateColorTransition()
         {
-            if (!_buttonImage) return;
+            if (!_targetImage) return;
             
-            _buttonImage.color = Color.Lerp(_buttonImage.color, _targetColor, colorTransitionSpeed * Time.unscaledDeltaTime);
+            _targetImage.color = Color.Lerp(_targetImage.color, _targetColor, colorTransitionSpeed * Time.unscaledDeltaTime);
         }
         
         private void UpdateScaleTransition()
@@ -172,6 +215,32 @@ namespace UI.Effects
             enableScaleEffect = enabled;
             hoverScale = hover;
             pressedScale = pressed;
+        }
+        
+        // Special handling for sliders
+        public void OnSliderValueChanged()
+        {
+            // Visual feedback when slider value changes via keyboard
+            if (_isKeyboardSelected && _selectable is Slider)
+            {
+                // Quick flash effect
+                StartCoroutine(SliderFeedbackCoroutine());
+            }
+        }
+        
+        private System.Collections.IEnumerator SliderFeedbackCoroutine()
+        {
+            Color originalColor = _targetColor;
+            _targetColor = Color.Lerp(hoverColor, pressedColor, 0.5f);
+            yield return new WaitForSecondsRealtime(0.1f);
+            _targetColor = originalColor;
+        }
+        
+        // Public method to trigger feedback for external use
+        public void TriggerFeedback()
+        {
+            if (_isKeyboardSelected)
+                StartCoroutine(SliderFeedbackCoroutine());
         }
     }
 }
