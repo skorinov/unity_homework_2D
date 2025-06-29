@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fba4b2cce3c84fc4a9f6f731bb54b31e, type: 3}
+  m_Name: ConditionalFragileAction
+  m_EditorClassIdentifier: 
+  actionName: 
+  description: 
+  neighborCheckRadius: 10
+  respawnDelay: 3
+  fragileChance: 20
+  sameHeightTolerance: 1
+  landingsToBreak: 2

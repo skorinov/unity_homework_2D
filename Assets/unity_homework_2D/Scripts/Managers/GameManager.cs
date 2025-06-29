@@ -1,259 +1,303 @@
+using Constants;
+using Controllers.Player;
+using Data;
+using Pooling;
 using UnityEngine;
+using Utilities;
 
 namespace Managers
 {
-    public class GameManager : MonoBehaviour
+    public enum GameState
     {
-        [Header("Game Settings")]
+        Menu,
+        Playing,
+        Paused
+    }
+
+    public class GameManager : Singleton<GameManager>
+    {
         [SerializeField] private Transform player;
+        [SerializeField] private PlatformGenerator platformGenerator;
         [SerializeField] private Camera mainCamera;
-        [SerializeField] private float cameraFollowSpeed = 2f;
-        [SerializeField] private float cameraOffsetY = 0f;
-        [SerializeField] private float minCameraY = 0f;
+        [SerializeField] private float cameraTransitionSpeed = 8f;
+        [SerializeField] private float deathDistance = 15f;
 
-        [Header("Platform Generation")]
-        [SerializeField] private float platformSpawnDistance = 3f;
-        [SerializeField] private float platformSpawnRangeX = 4f;
-        [SerializeField] private int initialPlatformCount = 10;
-
-        [Header("Platform Placement")]
-        [SerializeField] private float minHorizontalDistance = 4f;
-        [SerializeField] private float maxJumpDistance = 5f;
-        [SerializeField] private int maxConsecutiveSameSide = 2;
-
-        [Header("Optimization")]
-        [SerializeField] private float platformCleanupOffset = 15f;
-
-        // Height tracking event
         public System.Action<float> OnHeightChanged;
 
-        // Core game state
         private float _highestPlayerY;
-        private float _nextPlatformSpawnHeight;
-        private float _lastPlatformX;
-        private int _lastSide; // -1 left, 1 right, 0 uninitialized
-        private int _consecutiveSameSide;
-        
-        // Cached screen boundaries for performance
-        private float _screenHalfWidth;
-        private float _effectiveMaxX;
-        
-        // Performance optimization variables
-        private float _lastPlayerY;
-        private float _platformCheckTimer;
-        private const float PlatformCheckInterval = 0.1f;
-        private const int MaxPlatformsPerFrame = 3;
+        private float _lastGameCameraY;
+        private GameState _gameState = GameState.Menu;
+        private bool _isDead;
+        private bool _isCameraTransitioning;
+        private bool _hasGameEverStarted;
 
-        private void Start() => InitializeGame();
+        private CameraFollow _cameraFollow;
+        private ScreenWrappingSystem _screenWrapping;
 
-        private void InitializeGame()
+        public bool IsGameActive => _gameState == GameState.Playing;
+        public bool IsGameInProgress => _gameState != GameState.Menu;
+        public bool HasGameEverStarted => _hasGameEverStarted;
+        public bool IsCameraTransitioning => _isCameraTransitioning;
+
+        protected override void OnSingletonAwake()
         {
-            if (!player)
-            {
-                Debug.LogError("Player Transform is not assigned in GameManager!");
-                return;
-            }
-
-            // Initialize game state
-            _highestPlayerY = player.position.y;
-            _nextPlatformSpawnHeight = player.position.y + 1f;
-            _lastPlatformX = player.position.x;
-            
-            // Notify UI systems
-            OnHeightChanged?.Invoke(_highestPlayerY);
-            
-            // Setup game world
-            UpdateCachedValues();
-            GenerateInitialPlatforms();
+            InitializeComponents();
+            SetupMenuCamera();
         }
 
         private void Update()
         {
-            // Early exit if missing critical components
-            if (!player || !mainCamera) return;
+            if (_gameState == GameState.Playing && !_isDead && player)
+            {
+                UpdatePlayerHeight();
+                CheckDeathConditions();
+                platformGenerator?.UpdateGeneration(player.position.y);
+            }
+        }
+
+        private void InitializeComponents()
+        {
+            if (!mainCamera) mainCamera = Camera.main;
+
+            _cameraFollow = mainCamera.GetComponent<CameraFollow>();
+            if (!_cameraFollow) _cameraFollow = mainCamera.gameObject.AddComponent<CameraFollow>();
+
+            var playerObj = player ? player.gameObject : GameObject.FindWithTag(GameConstants.PLAYER_TAG);
+            if (playerObj)
+            {
+                _screenWrapping = playerObj.GetComponent<ScreenWrappingSystem>();
+                if (!_screenWrapping) _screenWrapping = playerObj.AddComponent<ScreenWrappingSystem>();
+            }
+        }
+
+        private void SetupMenuCamera()
+        {
+            if (mainCamera)
+            {
+                Vector3 pos = mainCamera.transform.position;
+                pos.x = GameConstants.MENU_AREA_X;
+                pos.y = 0f;
+                mainCamera.transform.position = pos;
+                mainCamera.orthographicSize = GameConstants.CAMERA_SIZE;
+            }
+
+            DisableGameComponents();
+        }
+
+        public void StartGame()
+        {
+            if (!player || _isCameraTransitioning) return;
             
-            UpdateCamera();
-            CheckPlatformGenerationOptimized();
-            CleanupOldPlatforms();
+            // Clear only for NEW game
+            ClearAllGameObjects();
+            // Always reset game state for new game
+            _hasGameEverStarted = true;
+            StartCoroutine(TransitionToGame(true)); // Force new game
         }
 
-        // Smooth camera following with vertical offset
-        private void UpdateCamera()
+        public void PauseGame()
         {
-            Vector3 targetPos = new Vector3(
-                mainCamera.transform.position.x,
-                Mathf.Max(player.position.y + cameraOffsetY, minCameraY),
-                mainCamera.transform.position.z
-            );
-
-            mainCamera.transform.position = Vector3.Lerp(
-                mainCamera.transform.position,
-                targetPos,
-                cameraFollowSpeed * Time.deltaTime
-            );
+            if (_gameState != GameState.Playing || _isCameraTransitioning) return;
+            _gameState = GameState.Paused;
+            StartCoroutine(TransitionToMenu());
         }
 
-        // Optimized platform generation check - runs periodically instead of every frame
-        private void CheckPlatformGenerationOptimized()
+        public void ResumeGame()
         {
-            _platformCheckTimer += Time.deltaTime;
+            if (_gameState != GameState.Paused || _isCameraTransitioning) return;
+            StartCoroutine(TransitionToGame(false)); // Resume existing game
+        }
+
+        public void RestartGame()
+        {
+            if (!player || _isCameraTransitioning) return;
             
-            // Check only periodically or when player moves up significantly
-            if (_platformCheckTimer >= PlatformCheckInterval || 
-                player.position.y > _lastPlayerY + 1f)
+            ClearAllGameObjects();
+
+            _isDead = false;
+            ResetGameSystems();
+            _highestPlayerY = player.position.y;
+            OnHeightChanged?.Invoke(_highestPlayerY);
+
+            StartCoroutine(TransitionToGame(true)); // Force new game
+        }
+
+        private System.Collections.IEnumerator TransitionToGame(bool isNewGame = false)
+        {
+            _isCameraTransitioning = true;
+
+            DisableGameComponents();
+            Time.timeScale = 0f;
+
+            // Setup game state
+            if (_gameState == GameState.Menu || isNewGame)
             {
-                CheckPlatformGeneration();
-                _platformCheckTimer = 0f;
-                _lastPlayerY = player.position.y;
+                _gameState = GameState.Playing;
+                _isDead = false;
+                _hasGameEverStarted = true;
+                DataManager.Instance?.StartNewSession();
+                
+                yield return StartCoroutine(MoveCameraToPosition(GameConstants.GAME_AREA_X, GameConstants.CAMERA_SIZE, 0f));
+                
+                if (player) player.position = Vector3.zero;
+                _highestPlayerY = 0f;
+                InitializeGame();
             }
-        }
-
-        private void CheckPlatformGeneration()
-        {
-            // Update highest point reached and notify UI
-            if (player.position.y > _highestPlayerY)
+            else if (_gameState == GameState.Paused)
             {
-                _highestPlayerY = player.position.y;
-                OnHeightChanged?.Invoke(_highestPlayerY);
+                _gameState = GameState.Playing;
+                
+                // Resume from saved camera position
+                yield return StartCoroutine(MoveCameraToPosition(GameConstants.GAME_AREA_X, GameConstants.CAMERA_SIZE, _lastGameCameraY));
             }
 
-            // Spawn platforms ahead of player, limiting spawns per frame
-            int platformsSpawned = 0;
-            while (_highestPlayerY + 10f > _nextPlatformSpawnHeight && 
-                   platformsSpawned < MaxPlatformsPerFrame)
+            EnableGameComponents();
+            Time.timeScale = 1f;
+            _isCameraTransitioning = false;
+        }
+
+        private System.Collections.IEnumerator TransitionToMenu()
+        {
+            _isCameraTransitioning = true;
+
+            // Save current camera Y position only if we're pausing (not dying)
+            if (_gameState == GameState.Paused && mainCamera)
+                _lastGameCameraY = mainCamera.transform.position.y;
+
+            DisableGameComponents();
+            Time.timeScale = 0f;
+
+            yield return StartCoroutine(MoveCameraToPosition(GameConstants.MENU_AREA_X, GameConstants.CAMERA_SIZE, 0));
+
+            _isCameraTransitioning = false;
+        }
+
+        private System.Collections.IEnumerator MoveCameraToPosition(float targetX, float targetSize, float targetY)
+        {
+            if (!mainCamera) yield break;
+
+            Vector3 startPos = mainCamera.transform.position;
+            Vector3 targetPos = new Vector3(targetX, targetY, startPos.z);
+            float startSize = mainCamera.orthographicSize;
+            float elapsed = 0f;
+            float duration = GameConstants.CAMERA_TRANSITION_BASE_DURATION  / cameraTransitionSpeed;
+
+            while (elapsed < duration)
             {
-                SpawnPlatform();
-                platformsSpawned++;
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+
+                mainCamera.transform.position = Vector3.Lerp(startPos, targetPos, t);
+                mainCamera.orthographicSize = Mathf.Lerp(startSize, targetSize, t);
+
+                yield return null;
             }
+
+            mainCamera.transform.position = targetPos;
+            mainCamera.orthographicSize = targetSize;
         }
 
-        // Remove platforms that are far below camera view
-        private void CleanupOldPlatforms()
+        private void EnableGameComponents()
         {
-            float cleanupHeight = mainCamera.transform.position.y - 
-                                 mainCamera.orthographicSize - platformCleanupOffset;
-            PlatformPool.Instance?.ReturnPlatformsBelowHeight(cleanupHeight);
-        }
-
-        // Create initial set of platforms when game starts
-        private void GenerateInitialPlatforms()
-        {
-            for (int i = 0; i < initialPlatformCount; i++)
+            if (_cameraFollow)
             {
-                SpawnPlatform();
+                _cameraFollow.enabled = true;
+                _cameraFollow.SetTarget(player);
             }
+
+            if (_screenWrapping) _screenWrapping.enabled = true;
         }
 
-        private void SpawnPlatform()
+        private void DisableGameComponents()
         {
-            // Update screen bounds only when camera size changes
-            if (Mathf.Abs(mainCamera.orthographicSize * mainCamera.aspect - _screenHalfWidth) > 0.01f)
-            {
-                UpdateCachedValues();
-            }
-            
-            // Calculate optimal position and spawn platform
-            float spawnX = CalculateOptimalPlatformX();
-            Vector3 spawnPos = new Vector3(spawnX, _nextPlatformSpawnHeight, 0f);
-
-            PlatformPool.Instance?.GetPlatform(spawnPos);
-            UpdatePlatformTracking(spawnX);
-            _nextPlatformSpawnHeight += platformSpawnDistance;
+            if (_cameraFollow) _cameraFollow.enabled = false;
+            if (_screenWrapping) _screenWrapping.enabled = false;
         }
 
-        // Cache screen boundaries for performance
-        private void UpdateCachedValues()
-        {
-            _screenHalfWidth = mainCamera.orthographicSize * mainCamera.aspect;
-            _effectiveMaxX = Mathf.Min(_screenHalfWidth - 0.5f, platformSpawnRangeX);
-        }
-
-        // Smart platform positioning algorithm
-        private float CalculateOptimalPlatformX()
-        {
-            // First platform or random placement
-            if (_lastSide == 0) return GetRandomSidePosition();
-
-            // Force side switch if too many consecutive platforms on same side
-            bool forceSideSwitch = _consecutiveSameSide >= maxConsecutiveSameSide;
-            float targetX = forceSideSwitch || Random.value < 0.7f 
-                ? GetOppositeSidePosition() 
-                : GetSameSidePosition();
-
-            return ClampToJumpableDistance(targetX);
-        }
-
-        // Generate random position on either side
-        private float GetRandomSidePosition() =>
-            Random.value < 0.5f 
-                ? Random.Range(-_effectiveMaxX, -0.1f) 
-                : Random.Range(0.1f, _effectiveMaxX);
-
-        // Generate position on opposite side from last platform
-        private float GetOppositeSidePosition() =>
-            _lastSide == -1 
-                ? Random.Range(minHorizontalDistance, _effectiveMaxX)
-                : Random.Range(-_effectiveMaxX, -minHorizontalDistance);
-
-        // Generate position on same side as last platform
-        private float GetSameSidePosition()
-        {
-            if (_lastSide == -1)
-            {
-                float minX = Mathf.Min(_lastPlatformX - minHorizontalDistance, -0.1f);
-                return Random.Range(-_effectiveMaxX, minX);
-            }
-            
-            float maxX = Mathf.Max(_lastPlatformX + minHorizontalDistance, 0.1f);
-            return Random.Range(maxX, _effectiveMaxX);
-        }
-
-        // Ensure platform is within jumpable distance
-        private float ClampToJumpableDistance(float targetX)
-        {
-            float distance = Mathf.Abs(targetX - _lastPlatformX);
-            if (distance <= maxJumpDistance) return targetX;
-
-            // Clamp to maximum jump distance
-            float direction = Mathf.Sign(targetX - _lastPlatformX);
-            targetX = _lastPlatformX + direction * maxJumpDistance;
-            targetX = Mathf.Clamp(targetX, -_effectiveMaxX, _effectiveMaxX);
-
-            // Avoid platforms too close to center
-            return Mathf.Abs(targetX) < 0.1f ? (targetX >= 0 ? 0.1f : -0.1f) : targetX;
-        }
-
-        // Track platform placement for side alternation logic
-        private void UpdatePlatformTracking(float platformX)
-        {
-            int newSide = platformX < 0 ? -1 : 1;
-            _consecutiveSameSide = newSide == _lastSide ? _consecutiveSameSide + 1 : 1;
-            _lastSide = newSide;
-            _lastPlatformX = platformX;
-        }
-        
-        public float GetHighestPlayerY() => _highestPlayerY;
-        public Transform GetPlayer() => player;
-        public float GetLastPlatformX() => _lastPlatformX;
-        public int GetConsecutiveSameSide() => _consecutiveSameSide;
-        
-        // Reset game state for restart
-        public void ResetGame()
+        private void InitializeGame()
         {
             if (!player) return;
-            
-            // Reset tracking variables
+
             _highestPlayerY = player.position.y;
-            _nextPlatformSpawnHeight = player.position.y + 1f;
-            _lastPlatformX = player.position.x;
-            _lastSide = 0;
-            _consecutiveSameSide = 0;
-            _platformCheckTimer = 0f;
-            
-            // Notify systems and regenerate platforms
             OnHeightChanged?.Invoke(_highestPlayerY);
-            UpdateCachedValues();
-            GenerateInitialPlatforms();
+            platformGenerator?.Initialize(player.position);
+        }
+
+        private void UpdatePlayerHeight()
+        {
+            float currentHeight = player.position.y;
+            if (currentHeight > _highestPlayerY)
+            {
+                _highestPlayerY = currentHeight;
+                OnHeightChanged?.Invoke(_highestPlayerY);
+                DataManager.Instance?.UpdateHeight(_highestPlayerY);
+            }
+        }
+
+        private void CheckDeathConditions()
+        {
+            if (_isDead || !mainCamera) return;
+
+            float deathY = mainCamera.transform.position.y - mainCamera.orthographicSize - deathDistance;
+            if (player.position.y < deathY)
+            {
+                TriggerGameOver();
+            }
+        }
+
+        public void TriggerGameOver()
+        {
+            if (_isDead) return;
+
+            _isDead = true;
+            _gameState = GameState.Menu;
+            _hasGameEverStarted = false; // Reset so buttons show correctly
+
+            DisableGameComponents();
+            Time.timeScale = 0f;
+            
+            AudioManager.Instance?.PlayGameOverSound();
+            DataManager.Instance?.GameData.EndSession();
+            UIManager.Instance?.ShowGameOver();
+        }
+
+        private void ResetGameSystems()
+        {
+            ResetPlayer();
+            ResetCameraPosition();
+        }
+
+        private void ResetPlayer()
+        {
+            if (!player) return;
+
+            player.position = Vector3.zero;
+
+            var playerRb = player.GetComponent<Rigidbody2D>();
+            if (playerRb)
+            {
+                playerRb.linearVelocity = Vector2.zero;
+                playerRb.angularVelocity = 0f;
+            }
+
+            player.GetComponent<PlayerController>()?.ResetMultipliers();
+        }
+
+        private void ResetCameraPosition()
+        {
+            if (mainCamera)
+            {
+                Vector3 pos = mainCamera.transform.position;
+                pos.y = 0f;
+                mainCamera.transform.position = pos;
+            }
+        }
+
+        private void ClearAllGameObjects()
+        {
+            PlatformPool.Instance?.ClearAllPlatforms();
+            CoinPool.Instance?.ClearAllCoins();
+            EnemyPool.Instance?.ClearAllEnemies();
         }
     }
 }

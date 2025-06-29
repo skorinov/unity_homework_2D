@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Platform
   - Ground
+  - Collectable
+  - MenuCamera
   layers:
   - Default
   - TransparentFX
@@ -14,17 +16,17 @@ TagManager:
   - Water
   - UI
   - Platform
-  - Overlay
+  - Enemy
   - Player
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Collectable
+  - MenuPlayer
+  - Background
+  - Decorations
+  - MenuDecorations
+  - MainMenuUI
+  - GameUI
+  - GameOverUI
+  - StatisticsUI
   - 
   - 
   - 
@@ -43,14 +45,32 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: UI
-    uniqueID: 677606243
+  - name: Background
+    uniqueID: 2041038437
+    locked: 0
+  - name: Midground
+    uniqueID: 2162095143
+    locked: 0
+  - name: Enemy
+    uniqueID: 2667136757
     locked: 0
   - name: Platform
     uniqueID: 726796683
     locked: 0
+  - name: Collectable
+    uniqueID: 2035819801
+    locked: 0
   - name: Player
     uniqueID: 1269269031
+    locked: 0
+  - name: MenuGround
+    uniqueID: 804647681
+    locked: 0
+  - name: MenuPlayer
+    uniqueID: 808371067
+    locked: 0
+  - name: UI
+    uniqueID: 677606243
     locked: 0
   m_RenderingLayers:
   - Default

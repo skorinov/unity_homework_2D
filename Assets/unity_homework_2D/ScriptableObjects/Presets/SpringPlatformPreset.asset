@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda2af86a07a440e90e6ec45c6d7eaa8, type: 3}
+  m_Name: SpringPlatformPreset
+  m_EditorClassIdentifier: 
+  presetName: 
+  description: 
+  actions:
+  - {fileID: 11400000, guid: 41fb7d477d9c43049923b21c21d8607b, type: 2}
+  - {fileID: 11400000, guid: 7e1e332a9502bac4b821b6cacc4910ed, type: 2}
+  overrideChance: -1
